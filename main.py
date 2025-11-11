@@ -1,3 +1,6 @@
+from utils import colored_message, GREEN_COLOR, RED_COLOR
+
+
 def main() -> None:
     """
     The main function that manages the command processing loop,
@@ -12,7 +15,7 @@ def main() -> None:
             user_input: str = input("Enter a command: ").strip()
         except EOFError:
             # Handle Ctrl+D (EOF) gracefully
-            print("\nGood bye!")
+            print(colored_message("\nGood bye!", GREEN_COLOR))
             break
 
         if not user_input:
@@ -21,7 +24,7 @@ def main() -> None:
         # TODO: implement input parsing and command handling
 
         if user_input in ["close", "exit"]:
-            print("Good bye!")
+            print(colored_message("Good bye!", GREEN_COLOR))
             break
 
 
