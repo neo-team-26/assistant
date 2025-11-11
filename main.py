@@ -1,3 +1,5 @@
+from address_book import AddressBook
+from handlers import COMMANDS
 from utils import parse_input, colored_message, GREEN_COLOR, RED_COLOR
 
 
@@ -6,6 +8,8 @@ def main() -> None:
     The main function that manages the command processing loop,
     including data loading and saving.
     """
+
+    book = AddressBook()
 
     print("Welcome to the assistant bot!")
     print("Type 'help' to see available commands. Type 'exit' or 'close' to quit.")
@@ -27,7 +31,13 @@ def main() -> None:
             print(colored_message("Good bye!", GREEN_COLOR))
             break
 
-        # TODO: implement command handling
+        handler = COMMANDS.get(command)
+
+        if handler:
+            print(handler(args, book))
+        else:
+            print(colored_message("Invalid command.", RED_COLOR))
+
 
 
 if __name__ == "__main__":
