@@ -1,4 +1,4 @@
-from utils import colored_message, GREEN_COLOR, RED_COLOR
+from utils import parse_input, colored_message, GREEN_COLOR, RED_COLOR
 
 
 def main() -> None:
@@ -21,11 +21,13 @@ def main() -> None:
         if not user_input:
             continue
 
-        # TODO: implement input parsing and command handling
+        command, args = parse_input(user_input)
 
-        if user_input in ["close", "exit"]:
+        if command in ["close", "exit"]:
             print(colored_message("Good bye!", GREEN_COLOR))
             break
+
+        # TODO: implement command handling
 
 
 if __name__ == "__main__":
