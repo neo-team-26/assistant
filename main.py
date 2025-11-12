@@ -1,6 +1,5 @@
-from address_book import AddressBook
 from handlers import COMMANDS
-from utils import parse_input, colored_message, GREEN_COLOR, RED_COLOR
+from utils import parse_input, colored_message, GREEN_COLOR, RED_COLOR, load_data
 
 
 def main() -> None:
@@ -9,7 +8,7 @@ def main() -> None:
     including data loading and saving.
     """
 
-    book = AddressBook()
+    book = load_data()
 
     print("Welcome to the assistant bot!")
     print("Type 'help' to see available commands. Type 'exit' or 'close' to quit.")
@@ -37,7 +36,6 @@ def main() -> None:
             print(handler(args, book))
         else:
             print(colored_message("Invalid command.", RED_COLOR))
-
 
 
 if __name__ == "__main__":
