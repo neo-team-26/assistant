@@ -1,5 +1,5 @@
 from handlers import COMMANDS
-from utils import parse_input, colored_message, GREEN_COLOR, RED_COLOR, load_data
+from utils import parse_input, colored_message, GREEN_COLOR, RED_COLOR, load_data, save_data
 
 
 def main() -> None:
@@ -17,6 +17,7 @@ def main() -> None:
         try:
             user_input: str = input("Enter a command: ").strip()
         except EOFError:
+            save_data(book)
             # Handle Ctrl+D (EOF) gracefully
             print(colored_message("\nGood bye!", GREEN_COLOR))
             break
@@ -27,6 +28,7 @@ def main() -> None:
         command, args = parse_input(user_input)
 
         if command in ["close", "exit"]:
+            save_data(book)
             print(colored_message("Good bye!", GREEN_COLOR))
             break
 
