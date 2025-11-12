@@ -1,9 +1,10 @@
 from typing import List
 
 from address_book import AddressBook, Record
-from utils import colored_message, GREEN_COLOR
+from utils import colored_message, GREEN_COLOR, input_error
 
 
+@input_error
 def add_contact(args: List[str], book: AddressBook) -> str:
     if len(args) < 2:
         raise ValueError("Must provide name and phone number.")
