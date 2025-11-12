@@ -2,7 +2,7 @@ import pickle
 from typing import List, Optional, Literal, Tuple
 
 # --- Constants ---
-from assistant.address_book import AddressBook
+from address_book import AddressBook
 
 RED_COLOR = "\033[91m"
 GREEN_COLOR = "\033[92m"
