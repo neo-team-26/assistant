@@ -1,9 +1,14 @@
+import pickle
 from typing import List, Optional, Literal, Tuple
 
 # --- Constants ---
+from assistant.address_book import AddressBook
+
 RED_COLOR = "\033[91m"
 GREEN_COLOR = "\033[92m"
 END_COLOR = "\033[0m"
+
+FILENAME = "addressbook.pkl"
 
 
 
@@ -53,3 +58,19 @@ def parse_input(user_input: str) -> Tuple[str, List[str]]:
     args = [arg for arg in args if arg]
 
     return command, args
+
+
+def load_data(filename: str = FILENAME) -> 'AddressBook':
+    """
+    Loads the AddressBook object from a file using pickle.
+    Returns a new AddressBook if the file is not found or corrupted.
+    """
+    try:
+        with open(filename, "rb") as f:
+            return pickle.load(f)
+    except FileNotFoundError:
+        print(f"File '{filename}' not found. Creating a new AddressBook.")
+        return AddressBook()
+    except Exception as e:
+        print(colored_message(f"Error loading data from '{filename}': {e}. Creating a new AddressBook.", RED_COLOR))
+        return AddressBook()
