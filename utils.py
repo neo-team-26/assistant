@@ -1,5 +1,6 @@
 import pickle
-from typing import List, Optional, Literal, Tuple
+from functools import wraps
+from typing import List, Optional, Literal, Tuple, Callable, Any
 
 # --- Constants ---
 from address_book import AddressBook
@@ -58,6 +59,22 @@ def parse_input(user_input: str) -> Tuple[str, List[str]]:
     args = [arg for arg in args if arg]
 
     return command, args
+
+
+def input_error(func: Callable[..., str]) -> Callable[..., str]:
+    """
+    A decorator that handles KeyError, ValueError, and IndexError exceptions
+    raised in command handler functions and returns the error message in RED.
+    """
+
+    @wraps(func)
+    def inner(*args: Any, **kwargs: Any) -> str:
+        try:
+            return func(*args, **kwargs)
+        except (ValueError, IndexError, KeyError) as e:
+            return colored_message(str(e), RED_COLOR)
+
+    return inner
 
 
 def load_data(filename: str = FILENAME) -> 'AddressBook':
