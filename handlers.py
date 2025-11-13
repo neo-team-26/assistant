@@ -2,6 +2,7 @@ from typing import List
 
 from address_book import AddressBook, Record
 from utils import colored_message, GREEN_COLOR, input_error
+from typing import List
 
 
 @input_error
@@ -70,6 +71,120 @@ def show_all(args: List[str], book: AddressBook) -> str:
 
     return "\n".join(all_contacts)
 
+@input_error
+def add_email(args: List[str], book: AddressBook) -> str:
+    if len(args) < 2:
+        raise ValueError("Must provide name and email.")
+    if len(args) > 2:
+        raise ValueError("Too many arguments. Expected: [name] [email]")
+
+    name, email = args
+
+    owner_record = book.find_record_by_email(email)
+
+    if owner_record is not None:
+        if owner_record.name.value.lower() != name.lower():
+            raise ValueError(f"Email '{email}' is already registered to contact '{owner_record.name.value}'.")
+        else:
+            pass
+
+    record = book.find_record_by_name(name)
+    message = "Contact updated."
+
+    if record is None:
+        record = Record(name)
+        book.add_record(record)
+        message = "Contact added."
+
+    record.add_email(email)
+
+    return colored_message(message, GREEN_COLOR)
+
+
+@input_error
+def remove_email(args: List[str], book: AddressBook) -> str:
+    if len(args) < 2:
+        raise ValueError("Must provide name and email.")
+    if len(args) > 2:
+        raise ValueError("Too many arguments. Expected: [name] [email]")
+
+    name, email = args
+    record = book.find_record_by_name(name)
+    if record is None:
+        raise KeyError(f"Contact name '{name}' not found.")
+
+    record.remove_email(email)
+    return colored_message("Email removed.", GREEN_COLOR)
+
+
+@input_error
+def change_email(args: List[str], book: AddressBook) -> str:
+    if len(args) < 3:
+        raise ValueError("Must provide name, old_email and new_email.")
+    if len(args) > 3:
+        raise ValueError("Too many arguments. Expected: [name] [old_email] [new_email]")
+
+    name, old_email, new_email = args
+    record = book.find_record_by_name(name)
+    if record is None:
+        raise KeyError(f"Contact name '{name}' not found.")
+
+    record.edit_email(old_email, new_email)
+    return colored_message("Email changed.", GREEN_COLOR)
+
+
+@input_error
+def add_address(args: List[str], book: AddressBook) -> str:
+    if len(args) < 2:
+        raise ValueError("Must provide name and address.")
+    if len(args) > 2:
+        raise ValueError("Too many arguments. Expected: [name] [address]")
+
+    name, address = args
+    record = book.find_record_by_name(name)
+    message = "Contact updated."
+
+    if record is None:
+        record = Record(name)
+        book.add_record(record)
+        message = "Contact added."
+
+    record.add_address(address)
+
+    return colored_message(message, GREEN_COLOR)
+
+
+@input_error
+def remove_address(args: List[str], book: AddressBook) -> str:
+    if len(args) < 2:
+        raise ValueError("Must provide name and address.")
+    if len(args) > 2:
+        raise ValueError("Too many arguments. Expected: [name] [address]")
+
+    name, address = args
+    record = book.find_record_by_name(name)
+    if record is None:
+        raise KeyError(f"Contact name '{name}' not found.")
+
+    record.remove_address(address)
+    return colored_message("Address removed.", GREEN_COLOR)
+
+
+@input_error
+def change_address(args: List[str], book: AddressBook) -> str:
+    if len(args) < 3:
+        raise ValueError("Must provide name, old_address and new_address.")
+    if len(args) > 3:
+        raise ValueError("Too many arguments. Expected: [name] [old_address] [new_address]")
+
+    name, old_address, new_address = args
+    record = book.find_record_by_name(name)
+    if record is None:
+        raise KeyError(f"Contact name '{name}' not found.")
+
+    record.edit_address(old_address, new_address)
+    return colored_message("Address changed.", GREEN_COLOR)
+
 
 # Mapping of command names to their handler functions
 COMMANDS = {
@@ -81,4 +196,11 @@ COMMANDS = {
     # "add-birthday": add_birthday,
     # "show-birthday": show_birthday,
     # "birthdays": birthdays,
+    "add-email": add_email,
+    "remove-email": remove_email,
+    "change-email": change_email,
+    "add-address": add_address,
+    "remove-address": remove_address,
+    "change-address": change_address,
 }
+
