@@ -1,6 +1,7 @@
 from typing import List, Optional, Dict, Union, Any
 from collections import UserDict
 from datetime import datetime, timedelta
+import re
 
 
 class Field:
@@ -42,6 +43,49 @@ class Phone(Field):
     @Field.value.setter
     def value(self, new_value: str):
         self._validate_phone(new_value)
+        self._value = new_value
+
+
+class Email(Field):
+    """Class for storing the contact's email. Includes simple email format validation."""
+
+    # Simple, commonly used email regex. Not exhaustive but sufficient for basic validation.
+    EMAIL_REGEX = re.compile(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$")
+
+    def __init__(self, value: str):
+        self._validate_email(value)
+        super().__init__(value)
+
+    @staticmethod
+    def _validate_email(email: str) -> None:
+        """Validate email using a regular expression. Raise ValueError on invalid format."""
+        if not Email.EMAIL_REGEX.fullmatch(email):
+            raise ValueError("Invalid email address format.")
+
+    @property
+    def value(self) -> str:
+        return self._value
+
+    @Field.value.setter
+    def value(self, new_value: str):
+        self._validate_email(new_value)
+        self._value = new_value
+
+
+class Address(Field):
+    """Class for storing the contact's postal/address string. No validation required."""
+
+    def __init__(self, value: str):
+        # No validation required; store as-is
+        super().__init__(value)
+
+    @property
+    def value(self) -> str:
+        return self._value
+
+    @Field.value.setter
+    def value(self, new_value: str):
+        # Accept any string for address
         self._value = new_value
 
 
