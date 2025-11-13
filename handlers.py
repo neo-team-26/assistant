@@ -190,8 +190,8 @@ def change_address(args: List[str], book: AddressBook) -> str:
 def delete_contact(args: List[str], book: AddressBook) -> str:
     attr_len = len(args)
     if attr_len < 1 or attr_len > 3:
-        raise ValueError("""To delete record please set record name as attribute.
-To delete phone please set record name and phone number as attributes""")
+        raise ValueError("""To delete record please set record name as argument.
+To delete phone please set record name and phone number as arguments""")
     name = args[0]
     if attr_len == 2:
         phone = args[1]
