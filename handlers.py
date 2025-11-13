@@ -241,6 +241,31 @@ def change_address(args: List[str], book: AddressBook) -> str:
 
 
 @command_desc(
+    command="delete",
+    usage="delete [name] or delete [name] [phone]",
+    desc="Deletes the specified contact or deletes the specified phone number.",
+    example="delete John or delete John 1234567890"
+)
+@input_error
+def delete_contact(args: List[str], book: AddressBook) -> str:
+    attr_len = len(args)
+    if attr_len < 1 or attr_len > 3:
+        raise ValueError("""To delete record please set record name as argument.
+To delete phone please set record name and phone number as arguments""")
+    name = args[0]
+    if attr_len == 2:
+        phone = args[1]
+        record = book.find_record_by_name(name)
+        if record:
+            record.remove_phone(phone)
+            return colored_message(f"Phone {phone} deleted for record {name}.", GREEN_COLOR)
+        raise ValueError(f"Record {name} was not found")
+    else:
+        book.delete(name)
+        return colored_message(f"Record {name} deleted.", GREEN_COLOR)
+
+
+@command_desc(
     command="help",
     usage="help [command]",
     desc="Show help information for commands.",
@@ -281,6 +306,7 @@ COMMANDS = {
     # TODO: uncomment it after implementing the functions
     "add": add_contact,
     # "change": change_contact,
+    "delete": delete_contact,
     "phone": show_phone,
     "all": show_all,
     # "add-birthday": add_birthday,
