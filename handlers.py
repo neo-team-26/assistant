@@ -1,10 +1,15 @@
 from typing import List
 
 from address_book import AddressBook, Record
-from utils import colored_message, GREEN_COLOR, input_error, RED_COLOR
+from utils import colored_message, GREEN_COLOR, YELLOW_COLOR, CYAN_COLOR, command_desc, input_error, print_help
 from typing import List
 
-
+@command_desc(
+    command="add",
+    usage="add [name] [phone]",
+    desc="Adds a new contact with the specified name and phone number.",
+    example="add John 1234567890"
+)
 @input_error
 def add_contact(args: List[str], book: AddressBook) -> str:
     if len(args) < 2:
@@ -38,6 +43,12 @@ def add_contact(args: List[str], book: AddressBook) -> str:
     return colored_message(message, GREEN_COLOR)
 
 
+@command_desc(
+    command="phone",
+    usage="phone [name]",
+    desc="Displays all phone numbers associated with the specified contact.",
+    example="phone John"
+)
 @input_error
 def show_phone(args: List[str], book: AddressBook) -> str:
     if len(args) < 1:
@@ -57,6 +68,12 @@ def show_phone(args: List[str], book: AddressBook) -> str:
     return f"{name}: {'; '.join(p.value for p in record.phones)}"
 
 
+@command_desc(
+    command="all",
+    usage="all",
+    desc="Displays all contacts stored in the address book.",
+    example="all"
+)
 @input_error
 def show_all(args: List[str], book: AddressBook) -> str:
     if args:
@@ -71,6 +88,13 @@ def show_all(args: List[str], book: AddressBook) -> str:
 
     return "\n".join(all_contacts)
 
+
+@command_desc(
+    command="add-email",
+    usage="add-email [name] [email]",
+    desc="Adds an email address to the specified contact.",
+    example="add-email John john@example.com"
+)
 @input_error
 def add_email(args: List[str], book: AddressBook) -> str:
     if len(args) < 2:
@@ -101,6 +125,12 @@ def add_email(args: List[str], book: AddressBook) -> str:
     return colored_message(message, GREEN_COLOR)
 
 
+@command_desc(
+    command="remove-email",
+    usage="remove-email [name] [email]",
+    desc="Removes the specified email address from the contact.",
+    example="remove-email John john@example.com"
+)
 @input_error
 def remove_email(args: List[str], book: AddressBook) -> str:
     if len(args) < 2:
@@ -117,6 +147,12 @@ def remove_email(args: List[str], book: AddressBook) -> str:
     return colored_message("Email removed.", GREEN_COLOR)
 
 
+@command_desc(
+    command="change-email",
+    usage="change-email [name] [old_email] [new_email]",
+    desc="Changes the email address of the specified contact.",
+    example="change-email John old@example.com new@example.com"
+)
 @input_error
 def change_email(args: List[str], book: AddressBook) -> str:
     if len(args) < 3:
@@ -133,6 +169,12 @@ def change_email(args: List[str], book: AddressBook) -> str:
     return colored_message("Email changed.", GREEN_COLOR)
 
 
+@command_desc(
+    command="add-address",
+    usage="add-address [name] [address]",
+    desc="Adds a physical address to the specified contact.",
+    example="add-address John 123 Main St"
+)
 @input_error
 def add_address(args: List[str], book: AddressBook) -> str:
     if len(args) < 2:
@@ -154,6 +196,12 @@ def add_address(args: List[str], book: AddressBook) -> str:
     return colored_message(message, GREEN_COLOR)
 
 
+@command_desc(
+    command="remove-address",
+    usage="remove-address [name] [address]",
+    desc="Removes the specified physical address from the contact.",
+    example="remove-address John 123 Main St"
+)
 @input_error
 def remove_address(args: List[str], book: AddressBook) -> str:
     if len(args) < 2:
@@ -170,6 +218,12 @@ def remove_address(args: List[str], book: AddressBook) -> str:
     return colored_message("Address removed.", GREEN_COLOR)
 
 
+@command_desc(
+    command="change-address",
+    usage="change-address [name] [old_address] [new_address]",
+    desc="Changes the physical address of the specified contact.",
+    example="change-address John 123 Old St 456 New St"
+)
 @input_error
 def change_address(args: List[str], book: AddressBook) -> str:
     if len(args) < 3:
@@ -186,6 +240,12 @@ def change_address(args: List[str], book: AddressBook) -> str:
     return colored_message("Address changed.", GREEN_COLOR)
 
 
+@command_desc(
+    command="delete",
+    usage="delete [name] or delete [name] [phone]",
+    desc="Deletes the specified contact or deletes the specified phone number.",
+    example="delete John or delete John 1234567890"
+)
 @input_error
 def delete_contact(args: List[str], book: AddressBook) -> str:
     attr_len = len(args)
@@ -205,6 +265,42 @@ To delete phone please set record name and phone number as arguments""")
         return colored_message(f"Record {name} deleted.", GREEN_COLOR)
 
 
+@command_desc(
+    command="help",
+    usage="help [command]",
+    desc="Show help information for commands.",
+    example="help add"
+)
+@input_error
+def show_help(args: List[str], book: AddressBook) -> str:
+    """Show help information for commands.
+
+    If args provided, show detailed help for that command.
+    Else, show a summary of all commands.
+    """
+    if len(args) > 1:
+        raise ValueError("Too many arguments. Expected: [command]")
+    if len(args) == 1:
+        command_name = args[0]
+        handler = COMMANDS.get(command_name)
+        if handler is None:
+            raise KeyError(f"Command '{command_name}' not found.")
+        return print_help(
+            command=handler.command,
+            usage=handler.usage,
+            description=handler.desc,
+            example=handler.example
+        )
+    else:
+        # Show summary of all commands
+        summary_lines: List[str] = []
+        for cmd_name, handler in COMMANDS.items():
+            line = (colored_message(f"{cmd_name}:", CYAN_COLOR) +
+                    f" {handler.desc}")
+            summary_lines.append(line)
+        return "\n".join(summary_lines)
+
+
 # Mapping of command names to their handler functions
 COMMANDS = {
     # TODO: uncomment it after implementing the functions
@@ -222,5 +318,6 @@ COMMANDS = {
     "add-address": add_address,
     "remove-address": remove_address,
     "change-address": change_address,
+    "help": show_help,
 }
 
