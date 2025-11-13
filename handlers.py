@@ -77,8 +77,6 @@ COMMANDS = {
     "add": add_contact,
     # "change": change_contact,
     "phone": show_phone,
-    # "all": show_all,
-    # "phone": show_phone,
     "all": show_all,
     # "add-birthday": add_birthday,
     # "show-birthday": show_birthday,
