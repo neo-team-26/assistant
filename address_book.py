@@ -123,6 +123,8 @@ class Record:
     def __init__(self, name: str):
         self.name: Name = Name(name)
         self.phones: List[Phone] = []
+        self.emails: List[Email] = []
+        self.addresses: List[Address] = []
         self.birthday: Optional[Birthday] = None
 
     def add_phone(self, phone_number: str) -> None:
@@ -149,6 +151,69 @@ class Record:
         else:
             raise ValueError(f"Old phone number '{old_phone}' not found.")
 
+    # --- Email management ---
+    def add_email(self, email_str: str) -> None:
+        email = Email(email_str)  # validation inside Email
+        if self.find_email(email_str):
+            raise ValueError(f"Email '{email_str}' already exists for this contact.")
+        self.emails.append(email)
+
+    def remove_email(self, email_str: str) -> None:
+        email_obj = self.find_email(email_str)
+        if email_obj:
+            self.emails.remove(email_obj)
+        else:
+            raise ValueError(f"Email '{email_str}' not found.")
+
+    def edit_email(self, old_email: str, new_email: str) -> None:
+        if self.find_email(new_email):
+            raise ValueError(f"New email '{new_email}' is already registered to this contact.")
+
+        email_object = self.find_email(old_email)
+        if email_object:
+            email_object.value = new_email
+        else:
+            raise ValueError(f"Old email '{old_email}' not found.")
+
+    def find_email(self, email_str: str) -> Union[Email, None]:
+        for email in self.emails:
+            if email.value == email_str:
+                return email
+        return None
+
+    # --- Address management ---
+    def add_address(self, address_str: str) -> None:
+        addr = Address(address_str)
+        # Inline check for existing address (removed separate find_address helper)
+        for a in self.addresses:
+            if a.value == address_str:
+                raise ValueError(f"Address '{address_str}' already exists for this contact.")
+        self.addresses.append(addr)
+
+    def remove_address(self, address_str: str) -> None:
+        # Inline search and removal
+        for a in self.addresses:
+            if a.value == address_str:
+                self.addresses.remove(a)
+                return
+        raise ValueError(f"Address '{address_str}' not found.")
+
+    def edit_address(self, old_address: str, new_address: str) -> None:
+        # Prevent duplicate
+        for a in self.addresses:
+            if a.value == new_address:
+                raise ValueError(f"New address '{new_address}' is already registered to this contact.")
+
+        # Find existing and edit
+        for a in self.addresses:
+            if a.value == old_address:
+                a.value = new_address
+                return
+
+        raise ValueError(f"Old address '{old_address}' not found.")
+
+    # find_address removed per request; address methods perform inline searches
+
     def find_phone(self, phone_number: str) -> Union[Phone, None]:
         for phone in self.phones:
             if phone.value == phone_number:
@@ -162,8 +227,18 @@ class Record:
 
     def __str__(self) -> str:
         phone_str = '; '.join(p.value for p in self.phones)
+        email_str = '; '.join(e.value for e in self.emails)
+        addr_str = '; '.join(a.value for a in self.addresses)
         birthday_str = f", birthday: {self.birthday}" if self.birthday else ""
-        return f"Contact name: {self.name.value}, phones: {phone_str}{birthday_str}"
+        parts = [f"Contact name: {self.name.value}"]
+        parts.append(f"phones: {phone_str}")
+        if email_str:
+            parts.append(f"emails: {email_str}")
+        if addr_str:
+            parts.append(f"addresses: {addr_str}")
+        parts.append(birthday_str.lstrip(', '))
+        # Filter out empty parts and join with ', '
+        return ', '.join([p for p in parts if p])
 
 
 class AddressBook(UserDict):
@@ -183,6 +258,12 @@ class AddressBook(UserDict):
     def find_record_by_phone(self, phone: str) -> Union[Record, None]:
         for record in self.data.values():
             if record.find_phone(phone):
+                return record
+        return None
+
+    def find_record_by_email(self, email: str) -> Union[Record, None]:
+        for record in self.data.values():
+            if hasattr(record, 'find_email') and record.find_email(email):
                 return record
         return None
 
