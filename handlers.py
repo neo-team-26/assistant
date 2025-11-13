@@ -1,9 +1,10 @@
 from typing import List
 
 from address_book import AddressBook, Record
-from utils import colored_message, GREEN_COLOR
+from utils import colored_message, GREEN_COLOR, input_error
 
 
+@input_error
 def add_contact(args: List[str], book: AddressBook) -> str:
     if len(args) < 2:
         raise ValueError("Must provide name and phone number.")
@@ -55,6 +56,21 @@ def show_phone(args: List[str], book: AddressBook) -> str:
     return f"{name}: {'; '.join(p.value for p in record.phones)}"
 
 
+@input_error
+def show_all(args: List[str], book: AddressBook) -> str:
+    if args:
+        raise ValueError("The 'all' command does not require arguments.")
+
+    if not book:
+        return "No contacts saved."
+
+    all_contacts: List[str] = []
+    for record in book.data.values():
+        all_contacts.append(str(record))
+
+    return "\n".join(all_contacts)
+
+
 # Mapping of command names to their handler functions
 COMMANDS = {
     # TODO: uncomment it after implementing the functions
@@ -62,6 +78,8 @@ COMMANDS = {
     # "change": change_contact,
     "phone": show_phone,
     # "all": show_all,
+    # "phone": show_phone,
+    "all": show_all,
     # "add-birthday": add_birthday,
     # "show-birthday": show_birthday,
     # "birthdays": birthdays,
