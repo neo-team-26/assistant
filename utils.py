@@ -14,7 +14,7 @@ CYAN_COLOR = "\033[96m"
 YELLOW_COLOR = "\033[93m"
 
 FILENAME = "addressbook.pkl"
-
+NOTEBOOK_FILENAME = "notebook.pkl"
 
 
 def colored_message(message: str, color: str) -> str:
@@ -97,10 +97,10 @@ def load_data(filename: str = FILENAME) -> 'AddressBook':
         return AddressBook()
 
 
-def load_notes(filename: str = FILENAME) -> 'AddressBook':
+def load_notes(filename: str = NOTEBOOK_FILENAME) -> 'Notebook':
     """
-    Loads the AddressBook object from a file using pickle.
-    Returns a new AddressBook if the file is not found or corrupted.
+    Loads the Notebook object from a file using pickle.
+    Returns a new Notebook if the file is not found or corrupted.
     """
     try:
         with open(filename, "rb") as f:
@@ -168,7 +168,6 @@ def print_help(command: str, usage: str, description: str,
 
     return "\n".join(lines)
 
-    
 
 def save_data(data: AddressBook, filename: str = FILENAME) -> None:
     """
