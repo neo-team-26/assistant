@@ -1,5 +1,5 @@
 from handlers import COMMANDS
-from utils import parse_input, colored_message, GREEN_COLOR, RED_COLOR, load_data, save_data
+from utils import parse_input, colored_message, GREEN_COLOR, RED_COLOR, YELLOW_COLOR, load_data, suggest_command, save_data
 
 
 def main() -> None:
@@ -38,6 +38,14 @@ def main() -> None:
             print(handler(args, book))
         else:
             print(colored_message("Invalid command.", RED_COLOR))
+            suggestions = suggest_command(command, list(COMMANDS.keys()))
+            if suggestions:
+                print("\nThe most similar commands are:")
+                for s in suggestions:
+                    print(f"  {s}")
+                print()
+            else:
+                print(colored_message("No similar commands found.", YELLOW_COLOR))
 
 
 if __name__ == "__main__":

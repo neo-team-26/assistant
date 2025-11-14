@@ -1,12 +1,16 @@
 import pickle
-from typing import List, Optional, Literal, Tuple
+from functools import wraps
+from typing import List, Optional, Literal, Tuple, Callable, Any
+import difflib
 
 # --- Constants ---
-from assistant.address_book import AddressBook
+from address_book import AddressBook
 
 RED_COLOR = "\033[91m"
 GREEN_COLOR = "\033[92m"
 END_COLOR = "\033[0m"
+CYAN_COLOR = "\033[96m"
+YELLOW_COLOR = "\033[93m"
 
 FILENAME = "addressbook.pkl"
 
@@ -60,6 +64,22 @@ def parse_input(user_input: str) -> Tuple[str, List[str]]:
     return command, args
 
 
+def input_error(func: Callable[..., str]) -> Callable[..., str]:
+    """
+    A decorator that handles KeyError, ValueError, and IndexError exceptions
+    raised in command handler functions and returns the error message in RED.
+    """
+
+    @wraps(func)
+    def inner(*args: Any, **kwargs: Any) -> str:
+        try:
+            return func(*args, **kwargs)
+        except (ValueError, IndexError, KeyError) as e:
+            return colored_message(str(e), RED_COLOR)
+
+    return inner
+
+
 def load_data(filename: str = FILENAME) -> 'AddressBook':
     """
     Loads the AddressBook object from a file using pickle.
@@ -74,6 +94,62 @@ def load_data(filename: str = FILENAME) -> 'AddressBook':
     except Exception as e:
         print(colored_message(f"Error loading data from '{filename}': {e}. Creating a new AddressBook.", RED_COLOR))
         return AddressBook()
+    
+def command_desc(command, desc, usage=None, example=None):
+    def decorator(func):
+        func.command = command
+        func.desc = desc
+        func.usage = usage
+        func.example = example
+        return func
+    return decorator
+
+
+def suggest_command(command: str, commands: list[str], limit: int = 3):
+    """
+    Return top N most similar commands using SequenceMatcher ratio.
+    """
+    similarity = []
+
+    for cmd in commands:
+        score = difflib.SequenceMatcher(None, command, cmd).ratio()
+        similarity.append((cmd, score))
+
+    # Sort by descending similarity score
+    similarity.sort(key=lambda x: x[1], reverse=True)
+
+    # Return only truly similar commands
+    result = [cmd for cmd, score in similarity if score > 0.45][:limit]
+
+    return result
+
+
+def print_help(command: str, usage: str, description: str,
+               example: str = None) -> str:
+    """Return formatted help string for a command."""
+    lines = []
+    # Top border
+    line = "─" * 50
+    lines.append(colored_message(line, CYAN_COLOR))
+    lines.append(colored_message(f"  HELP: {command}", CYAN_COLOR))
+    lines.append(colored_message(line, CYAN_COLOR))
+    lines.append("")
+
+    # Usage
+    lines.append(colored_message("USAGE:", YELLOW_COLOR))
+    lines.append(f"  {usage}\n")
+
+    # Description
+    lines.append(colored_message("DESCRIPTION:", YELLOW_COLOR))
+    lines.append(f"  {description}\n")
+
+    # Example (optional section)
+    if example:
+        lines.append(colored_message("EXAMPLE:", YELLOW_COLOR))
+        lines.append(f"  {example}\n")
+
+    return "\n".join(lines)
+
     
 
 def save_data(data: AddressBook, filename: str = FILENAME) -> None:
