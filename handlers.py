@@ -1,8 +1,6 @@
-from typing import List
-
 from address_book import AddressBook, Record
-from assistant.notebook import Notebook
-from utils import colored_message, GREEN_COLOR, YELLOW_COLOR, CYAN_COLOR, command_desc, input_error, print_help
+from notebook import Notebook
+from utils import colored_message, Color, command_desc, input_error, print_help, Handler
 from typing import List
 
 @command_desc(
@@ -39,9 +37,9 @@ def add_contact(args: List[str], book: AddressBook) -> str:
         book.add_record(record)
         message = "Contact added."
 
-    record.add_phone(phone) # This handles validation and duplicate check for the same contact
+    record.add_phone(phone)  # This handles validation and duplicate check for the same contact
 
-    return colored_message(message, GREEN_COLOR)
+    return colored_message(message, Color.GREEN)
 
 
 @command_desc(
@@ -123,7 +121,7 @@ def add_email(args: List[str], book: AddressBook) -> str:
 
     record.add_email(email)
 
-    return colored_message(message, GREEN_COLOR)
+    return colored_message(message, Color.GREEN)
 
 
 @command_desc(
@@ -145,7 +143,7 @@ def remove_email(args: List[str], book: AddressBook) -> str:
         raise KeyError(f"Contact name '{name}' not found.")
 
     record.remove_email(email)
-    return colored_message("Email removed.", GREEN_COLOR)
+    return colored_message("Email removed.", Color.GREEN)
 
 
 @command_desc(
@@ -167,7 +165,7 @@ def change_email(args: List[str], book: AddressBook) -> str:
         raise KeyError(f"Contact name '{name}' not found.")
 
     record.edit_email(old_email, new_email)
-    return colored_message("Email changed.", GREEN_COLOR)
+    return colored_message("Email changed.", Color.GREEN)
 
 
 @command_desc(
@@ -194,7 +192,7 @@ def add_address(args: List[str], book: AddressBook) -> str:
 
     record.add_address(address)
 
-    return colored_message(message, GREEN_COLOR)
+    return colored_message(message, Color.GREEN)
 
 
 @command_desc(
@@ -216,7 +214,7 @@ def remove_address(args: List[str], book: AddressBook) -> str:
         raise KeyError(f"Contact name '{name}' not found.")
 
     record.remove_address(address)
-    return colored_message("Address removed.", GREEN_COLOR)
+    return colored_message("Address removed.", Color.GREEN)
 
 
 @command_desc(
@@ -238,7 +236,7 @@ def change_address(args: List[str], book: AddressBook) -> str:
         raise KeyError(f"Contact name '{name}' not found.")
 
     record.edit_address(old_address, new_address)
-    return colored_message("Address changed.", GREEN_COLOR)
+    return colored_message("Address changed.", Color.GREEN)
 
 
 @command_desc(
@@ -259,11 +257,11 @@ To delete phone please set record name and phone number as arguments""")
         record = book.find_record_by_name(name)
         if record:
             record.remove_phone(phone)
-            return colored_message(f"Phone {phone} deleted for record {name}.", GREEN_COLOR)
+            return colored_message(f"Phone {phone} deleted for record {name}.", Color.GREEN)
         raise ValueError(f"Record {name} was not found")
     else:
         book.delete(name)
-        return colored_message(f"Record {name} deleted.", GREEN_COLOR)
+        return colored_message(f"Record {name} deleted.", Color.GREEN)
 
 
 @command_desc(
@@ -273,12 +271,12 @@ To delete phone please set record name and phone number as arguments""")
     example="add-note homework 'Do it today!!!'"
 )
 @input_error
-def add_note(args: List[str], notebook: Notebook) -> None:
+def add_note(args: List[str], notebook: Notebook) -> str:
     if len(args) != 2:
-        raise ValueError("Please set Note name and text(in quotation marks)")
+        raise ValueError("Please provide Note name and text(in quotation marks)")
     name, text = args
     notebook.add_note(name, text)
-    return colored_message(f"Added note {name} with text:{text}", GREEN_COLOR)
+    return colored_message(f"Added note \"{name}\" with text: \"{text}\"", Color.GREEN)
 
 
 @command_desc(
@@ -288,12 +286,12 @@ def add_note(args: List[str], notebook: Notebook) -> None:
     example="edit-note homework 'Do it today!!!'"
 )
 @input_error
-def edit_note(args: List[str], notebook: Notebook) -> None:
+def edit_note(args: List[str], notebook: Notebook) -> str:
     if len(args) != 2:
-        raise ValueError("Please set note name and text(in quotation marks)")
+        raise ValueError("Please provide note name and text(in quotation marks)")
     name, text = args
     notebook.edit_note(name, text)
-    return colored_message(f"Changed note {name} to:{text}", GREEN_COLOR)
+    return colored_message(f"Changed note {name} to:{text}", Color.GREEN)
 
 
 @command_desc(
@@ -303,12 +301,12 @@ def edit_note(args: List[str], notebook: Notebook) -> None:
     example="delete-note homework"
 )
 @input_error
-def delete_note(args: List[str], notebook: Notebook) -> None:
+def delete_note(args: List[str], notebook: Notebook) -> str:
     if len(args) != 1:
-        raise ValueError("Please set note name")
+        raise ValueError("Please provide note name")
     name = args[0]
     notebook.delete_note(name)
-    return colored_message(f"Deleted note {name}", GREEN_COLOR)
+    return colored_message(f"Deleted note {name}", Color.GREEN)
 
 
 @command_desc(
@@ -318,7 +316,7 @@ def delete_note(args: List[str], notebook: Notebook) -> None:
     example="all-notes"
 )
 @input_error
-def all_notes(args: List[str], notebook: Notebook) -> List[str]:
+def all_notes(args: List[str], notebook: Notebook) -> str:
     if args:
         raise ValueError("The 'all-nptes' command does not require arguments.")
     if not notebook:
@@ -332,22 +330,34 @@ def all_notes(args: List[str], notebook: Notebook) -> List[str]:
     desc="Lists all notes that contains",
     example="find-notes now today"
 )
-def find_notes(*args: str):
-    return list(args)[-1].find_notes(args)
+@input_error
+def find_notes(args: List[str], notebook: Notebook) -> str:
+    if not args:
+        raise ValueError("Please provide one or more search words.")
+    if not notebook:
+        return "No notes available."
+    results = notebook.find_notes(*args)
+    if not results:
+        return "No matching notes found."
+    lines: List[str] = [f"{name}: {text}" for name, text in results]
+    return "\n".join(lines)
 
 
 @command_desc(
-    command="get-note",
-    usage="get-note [name]",
+    command="show-note",
+    usage="show-note [name]",
     desc="Shows note with specified name",
-    example="get-note homework"
+    example="show-note homework"
 )
 @input_error
-def get_note(args: List[str], notebook: Notebook) -> None:
+def show_note(args: List[str], notebook: Notebook) -> str:
     if len(args) != 1:
-        raise ValueError("Please set note name")
+        raise ValueError("Please provide note name")
     name = args[0]
-    return notebook.get_note(name)
+    note = notebook.get_note(name)
+    if note is None:
+        return colored_message(f"Note '{name}' not found.", Color.RED)
+    return note
 
 
 @command_desc(
@@ -357,7 +367,7 @@ def get_note(args: List[str], notebook: Notebook) -> None:
     example="help add"
 )
 @input_error
-def show_help(args: List[str], book: AddressBook) -> str:
+def show_help(args: List[str]) -> str:
     """Show help information for commands.
 
     If args provided, show detailed help for that command.
@@ -370,18 +380,19 @@ def show_help(args: List[str], book: AddressBook) -> str:
         handler = COMMANDS.get(command_name)
         if handler is None:
             raise KeyError(f"Command '{command_name}' not found.")
+        # Use getattr to access metadata attached by decorator to avoid mypy attribute errors
         return print_help(
-            command=handler.command,
-            usage=handler.usage,
-            description=handler.desc,
-            example=handler.example
+            command=getattr(handler, 'command', command_name),
+            usage=getattr(handler, 'usage', ''),
+            description=getattr(handler, 'desc', ''),
+            example=getattr(handler, 'example', None)
         )
     else:
         # Show summary of all commands
         summary_lines: List[str] = []
         for cmd_name, handler in COMMANDS.items():
-            line = (colored_message(f"{cmd_name}:", CYAN_COLOR) +
-                    f" {handler.desc}")
+            line = (colored_message(f"{cmd_name}:", Color.CYAN) +
+                    f" {getattr(handler, 'desc', '')}")
             summary_lines.append(line)
         return "\n".join(summary_lines)
 
@@ -411,7 +422,7 @@ def change_contact(args: List[str], book: AddressBook) -> str:
         raise KeyError(f"Contact name '{name}' not found.")
 
     record.edit_phone(old_phone, new_phone)
-    return colored_message("Phone changed.", GREEN_COLOR)
+    return colored_message("Phone changed.", Color.GREEN)
 
 
 @command_desc(
@@ -438,7 +449,7 @@ def add_birthday(args: List[str], book: AddressBook) -> str:
         message = "Contact added."
 
     record.add_birthday(birthday_date)
-    return colored_message(message, GREEN_COLOR)
+    return colored_message(message, Color.GREEN)
 
 
 @command_desc(
@@ -496,10 +507,9 @@ def birthdays(args: List[str], book: AddressBook) -> str:
         lines.append(f"{day}: {', '.join(names)}")
 
     return "\n".join(lines)
- 
 
-
-COMMANDS = {
+# TODO: figure out why static type checkers fail to check this properly
+COMMANDS: dict[str, Handler] = {
     # TODO: uncomment it after implementing the functions
     "add": add_contact,
     "change": change_contact,
@@ -516,11 +526,10 @@ COMMANDS = {
     "remove-address": remove_address,
     "change-address": change_address,
     "add-note": add_note,
-    "edit-note":  edit_note,
+    "edit-note": edit_note,
     "delete-note": delete_note,
     "all-notes": all_notes,
     "find-notes": find_notes,
-    "get-note": get_note,
+    "show-note": show_note,
     "help": show_help,
 }
-
