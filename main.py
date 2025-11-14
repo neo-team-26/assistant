@@ -1,5 +1,6 @@
 from handlers import COMMANDS
-from utils import parse_input, colored_message, GREEN_COLOR, RED_COLOR, YELLOW_COLOR, load_data, suggest_command
+from utils import parse_input, colored_message, GREEN_COLOR, RED_COLOR, YELLOW_COLOR, load_data, suggest_command, \
+    load_notes
 
 
 def main() -> None:
@@ -9,6 +10,7 @@ def main() -> None:
     """
 
     book = load_data()
+    notes = load_notes()
 
     print("Welcome to the assistant bot!")
     print("Type 'help' to see available commands. Type 'exit' or 'close' to quit.")
@@ -33,7 +35,10 @@ def main() -> None:
         handler = COMMANDS.get(command)
 
         if handler:
-            print(handler(args, book))
+            if "note" in handler.__name__:
+                print(handler(args, notes))
+            else:
+                print(handler(args, book))
         else:
             print(colored_message("Invalid command.", RED_COLOR))
             suggestions = suggest_command(command, list(COMMANDS.keys()))

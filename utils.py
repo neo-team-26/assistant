@@ -5,6 +5,7 @@ import difflib
 
 # --- Constants ---
 from address_book import AddressBook
+from assistant.notebook import Notebook
 
 RED_COLOR = "\033[91m"
 GREEN_COLOR = "\033[92m"
@@ -94,7 +95,24 @@ def load_data(filename: str = FILENAME) -> 'AddressBook':
     except Exception as e:
         print(colored_message(f"Error loading data from '{filename}': {e}. Creating a new AddressBook.", RED_COLOR))
         return AddressBook()
-    
+
+
+def load_notes(filename: str = FILENAME) -> 'AddressBook':
+    """
+    Loads the AddressBook object from a file using pickle.
+    Returns a new AddressBook if the file is not found or corrupted.
+    """
+    try:
+        with open(filename, "rb") as f:
+            return pickle.load(f)
+    except FileNotFoundError:
+        print(f"File '{filename}' not found. Creating a new Notebook.")
+        return Notebook()
+    except Exception as e:
+        print(colored_message(f"Error loading data from '{filename}': {e}. Creating a new Notebook.", RED_COLOR))
+        return Notebook()
+
+
 def command_desc(command, desc, usage=None, example=None):
     def decorator(func):
         func.command = command
