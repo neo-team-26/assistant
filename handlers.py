@@ -266,17 +266,36 @@ To delete phone please set record name and phone number as arguments""")
 
 @command_desc(
     command="add-note",
-    usage="add-note [name] [text]",
-    desc="Adds note to notebook with specified name",
-    example="add-note homework 'Do it today!!!'"
+    usage="add-note [name] [text] [optional #tag1 #tag2 ...]",
+    desc="Adds note to notebook with specified name and optional tags (starting with #).",
+    example="add-note homework 'Do it today!!!' #todo #urgent"
 )
 @input_error
 def add_note(args: List[str], notebook: Notebook) -> str:
-    if len(args) != 2:
-        raise ValueError("Please provide Note name and text(in quotation marks)")
-    name, text = args
-    notebook.add_note(name, text)
-    return colored_message(f"Added note \"{name}\" with text: \"{text}\"", Color.GREEN)
+    if len(args) < 2:
+        raise ValueError("Please provide Note name and text (in quotation marks). Optional: add tags starting with #.")
+
+    name = args[0]
+    text_parts: List[str] = []
+    tags: List[str] = []
+
+    for arg in args[1:]:
+        if arg.startswith('#'):
+            tags.append(arg[1:]) # Видаляємо #
+        elif not tags: # All text parts before tags
+            text_parts.append(arg)
+        else: # If tags have started, no more text allowed
+            raise ValueError("Text must be provided before tags. Tags must start with '#'.")
+
+    if not text_parts:
+        raise ValueError("Please provide Note text (in quotation marks).")
+
+    text = " ".join(text_parts)
+
+    notebook.add_note(name, text, tags)
+
+    tag_info = f" with tags: {', '.join(tags)}" if tags else ""
+    return colored_message(f"Added note \"{name}\" with text: \"{text}\"{tag_info}", Color.GREEN)
 
 
 @command_desc(
@@ -326,19 +345,49 @@ def all_notes(args: List[str], notebook: Notebook) -> str:
 
 @command_desc(
     command="find-notes",
-    usage="find-notes [key words list, space separated]",
-    desc="Lists all notes that contains",
-    example="find-notes now today"
+    usage="find-notes [word | +word | -word] [optional #tag1 #tag2 ...]",
+    desc="Lists notes that match keywords (+ for AND, - for NOT, no prefix for OR) AND AT LEAST ONE specified tag.",
+    example="find-notes report +financial -draft #urgent #month_end"
 )
 @input_error
 def find_notes(args: List[str], notebook: Notebook) -> str:
     if not args:
-        raise ValueError("Please provide one or more search words.")
+        raise ValueError("Please provide one or more search words or tags.")
     if not notebook:
         return "No notes available."
-    results = notebook.find_notes(*args)
+
+    and_words: List[str] = []
+    or_words: List[str] = []
+    not_words: List[str] = []
+    required_tags: List[str] = []
+
+    for arg in args:
+        if arg.startswith('#'):
+            required_tags.append(arg[1:])
+        elif arg.startswith('+'):
+            and_words.append(arg[1:])
+        elif arg.startswith('-'):
+            not_words.append(arg[1:])
+        else:
+            or_words.append(arg)
+
+    if not (and_words or or_words or not_words or required_tags):
+        raise ValueError("Please provide one or more search words or tags.")
+
+    results = notebook.find_notes(and_words, or_words, not_words, required_tags)
+
     if not results:
-        return "No matching notes found."
+        text_terms = ", ".join(and_words + or_words + not_words)
+        tag_terms = ", ".join(required_tags)
+
+        message = "No matching notes found."
+        if text_terms:
+            message += f" for text: {text_terms}"
+        if tag_terms:
+            message += f" and tags: {tag_terms}"
+
+        return message
+
     lines: List[str] = [f"{name}: {text}" for name, text in results]
     return "\n".join(lines)
 
@@ -361,13 +410,71 @@ def show_note(args: List[str], notebook: Notebook) -> str:
 
 
 @command_desc(
+    command="add-tags",
+    usage="add-tags [name] [#tag1 #tag2 ...]",
+    desc="Adds one or more tags to the specified note.",
+    example="add-tags homework #urgent #high_priority"
+)
+@input_error
+def add_tags(args: List[str], notebook: Notebook) -> str:
+    if len(args) < 2:
+        raise ValueError("Please provide note name and at least one tag (starting with #).")
+
+    name = args[0]
+    tags: List[str] = []
+
+    for arg in args[1:]:
+        if arg.startswith('#'):
+            tags.append(arg[1:])
+        else:
+            raise ValueError("All tags must start with '#'.")
+
+    if not tags:
+        raise ValueError("Please provide at least one tag (starting with #).")
+
+    try:
+        notebook.add_tags_to_note(name, tags)
+        return colored_message(f"Tags added to note '{name}': {', '.join(tags)}", Color.GREEN)
+    except KeyError as e:
+        raise KeyError(str(e))
+
+
+@command_desc(
+    command="remove-tag",
+    usage="remove-tag [name] [#tag]",
+    desc="Removes a specific tag from the note.",
+    example="remove-tag homework #urgent"
+)
+@input_error
+def remove_tag(args: List[str], notebook: Notebook) -> str:
+    if len(args) != 2:
+        raise ValueError("Please provide note name and one tag (starting with #).")
+
+    name = args[0]
+    tag_arg = args[1]
+
+    if not tag_arg.startswith('#'):
+        raise ValueError("The tag must start with '#'.")
+
+    tag = tag_arg[1:]
+
+    try:
+        notebook.remove_tag_from_note(name, tag)
+        return colored_message(f"Tag '{tag}' removed from note '{name}'.", Color.GREEN)
+    except KeyError as e:
+        raise KeyError(str(e))
+    except ValueError as e:
+        raise ValueError(str(e))
+
+
+@command_desc(
     command="help",
     usage="help [command]",
     desc="Show help information for commands.",
     example="help add"
 )
 @input_error
-def show_help(args: List[str]) -> str:
+def show_help(args: List[str], _: None) -> str: # Second argument is needed for uniformity
     """Show help information for commands.
 
     If args provided, show detailed help for that command.
@@ -532,4 +639,6 @@ COMMANDS: dict[str, Handler] = {
     "find-notes": find_notes,
     "show-note": show_note,
     "help": show_help,
+    "add-tags": add_tags,
+    "remove-tag": remove_tag,
 }
