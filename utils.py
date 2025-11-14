@@ -1,189 +1,177 @@
 import pickle
+import shlex
+from enum import Enum
 from functools import wraps
-from typing import List, Optional, Literal, Tuple, Callable, Any
+from typing import List, Tuple, Callable, Any, Protocol, TypeVar, Optional, Union, cast
 import difflib
 
-# --- Constants ---
 from address_book import AddressBook
-from assistant.notebook import Notebook
-
-RED_COLOR = "\033[91m"
-GREEN_COLOR = "\033[92m"
-END_COLOR = "\033[0m"
-CYAN_COLOR = "\033[96m"
-YELLOW_COLOR = "\033[93m"
-
-FILENAME = "addressbook.pkl"
-NOTEBOOK_FILENAME = "notebook.pkl"
+from notebook import Notebook
 
 
-def colored_message(message: str, color: str) -> str:
+class Color(str, Enum):
+    RED = "\033[91m"
+    GREEN = "\033[92m"
+    YELLOW = "\033[93m"
+    CYAN = "\033[96m"
+    END = "\033[0m"
+
+
+ADDRESSBOOK_FILE = "addressbook.pkl"
+NOTEBOOK_FILE = "notebook.pkl"
+
+# Generic type for pickle loader
+U = TypeVar("U")
+
+
+class Handler(Protocol):
     """
-    Cover the message in ANSI escape sequences for colored output.
+    Protocol for all command handlers.
+
+    The handler receives a list of string args and an optional target object
+    (either an AddressBook or a Notebook) and returns a string message.
     """
-    return f"{color}{message}{END_COLOR}"
+
+    def __call__(self, args: List[str], target: Optional[Union[AddressBook, Notebook]]) -> str: ...
+
+
+def colored_message(message: str, color: Color) -> str:
+    """Wrap message in ANSI color codes."""
+    return f"{color.value}{message}{Color.END.value}"
 
 
 def parse_input(user_input: str) -> Tuple[str, List[str]]:
     """
-    Parses the user input string into a command and a list of arguments,
-    supporting arguments enclosed in quotes.
+    Parse command and arguments using shlex for robust quoting support.
     """
-    args: List[str] = []
-    current_arg: str = ""
-    in_quotes: Optional[Literal] = None
-    user_input = ' '.join(user_input.split())
+    user_input = user_input.strip()
     if not user_input:
         return "", []
-    parts = user_input.split(maxsplit=1)
-    command = parts[0].strip().lower()
-    if len(parts) == 1:
-        return command, []
-    args_string = parts[1]
-    for char in args_string:
-        if in_quotes is not None:
-            if char == in_quotes:
-                in_quotes = None
-            else:
-                current_arg += char
-        else:
-            if char in ('"', "'"):
-                in_quotes = char
-            elif char == ' ':
-                if current_arg:
-                    args.append(current_arg)
-                current_arg = ""
-            else:
-                current_arg += char
-    # Handle the last argument
-    if current_arg or (current_arg == "" and in_quotes is None and args_string.endswith(('"', "'")) and not args):
-        args.append(current_arg)
 
-    # Remove empty strings resulting from quote handling cleanup
-    args = [arg for arg in args if arg]
-
+    parts = shlex.split(user_input)
+    command = parts[0].lower()
+    args = parts[1:]
     return command, args
 
 
 def input_error(func: Callable[..., str]) -> Callable[..., str]:
     """
-    A decorator that handles KeyError, ValueError, and IndexError exceptions
-    raised in command handler functions and returns the error message in RED.
+    Decorator for safe command execution with nice error messages.
     """
 
     @wraps(func)
-    def inner(*args: Any, **kwargs: Any) -> str:
+    def wrapper(*args: Any, **kwargs: Any) -> str:
         try:
             return func(*args, **kwargs)
         except (ValueError, IndexError, KeyError) as e:
-            return colored_message(str(e), RED_COLOR)
+            return colored_message(str(e), Color.RED)
 
-    return inner
+    return wrapper
 
 
-def load_data(filename: str = FILENAME) -> 'AddressBook':
+def load_pickle(filename: str, factory: Callable[[], U]) -> U:
     """
-    Loads the AddressBook object from a file using pickle.
-    Returns a new AddressBook if the file is not found or corrupted.
-    """
-    try:
-        with open(filename, "rb") as f:
-            return pickle.load(f)
-    except FileNotFoundError:
-        print(f"File '{filename}' not found. Creating a new AddressBook.")
-        return AddressBook()
-    except Exception as e:
-        print(colored_message(f"Error loading data from '{filename}': {e}. Creating a new AddressBook.", RED_COLOR))
-        return AddressBook()
-
-
-def load_notes(filename: str = NOTEBOOK_FILENAME) -> 'Notebook':
-    """
-    Loads the Notebook object from a file using pickle.
-    Returns a new Notebook if the file is not found or corrupted.
+    Load an object from pickle. If missing or corrupted — return a fresh instance.
     """
     try:
         with open(filename, "rb") as f:
-            return pickle.load(f)
+            # cast the result of pickle.load to the expected type
+            return cast(U, pickle.load(f))
     except FileNotFoundError:
-        print(f"File '{filename}' not found. Creating a new Notebook.")
-        return Notebook()
+        print(f"File '{filename}' not found. Creating a new instance.")
+        return factory()
     except Exception as e:
-        print(colored_message(f"Error loading data from '{filename}': {e}. Creating a new Notebook.", RED_COLOR))
-        return Notebook()
+        print(colored_message(
+            f"Error loading '{filename}': {e}. Creating new instance.",
+            Color.RED
+        ))
+        return factory()
 
 
-def command_desc(command, desc, usage=None, example=None):
-    def decorator(func):
-        func.command = command
-        func.desc = desc
-        func.usage = usage
-        func.example = example
-        return func
-    return decorator
-
-
-def suggest_command(command: str, commands: list[str], limit: int = 3):
+def load_addressbook(filename: str = ADDRESSBOOK_FILE) -> AddressBook:
     """
-    Return top N most similar commands using SequenceMatcher ratio.
+    Load address book from pickle file.
     """
-    similarity = []
-
-    for cmd in commands:
-        score = difflib.SequenceMatcher(None, command, cmd).ratio()
-        similarity.append((cmd, score))
-
-    # Sort by descending similarity score
-    similarity.sort(key=lambda x: x[1], reverse=True)
-
-    # Return only truly similar commands
-    result = [cmd for cmd, score in similarity if score > 0.45][:limit]
-
-    return result
+    return load_pickle(filename, AddressBook)
 
 
-def print_help(command: str, usage: str, description: str,
-               example: str = None) -> str:
-    """Return formatted help string for a command."""
-    lines = []
-    # Top border
-    line = "─" * 50
-    lines.append(colored_message(line, CYAN_COLOR))
-    lines.append(colored_message(f"  HELP: {command}", CYAN_COLOR))
-    lines.append(colored_message(line, CYAN_COLOR))
-    lines.append("")
-
-    # Usage
-    lines.append(colored_message("USAGE:", YELLOW_COLOR))
-    lines.append(f"  {usage}\n")
-
-    # Description
-    lines.append(colored_message("DESCRIPTION:", YELLOW_COLOR))
-    lines.append(f"  {description}\n")
-
-    # Example (optional section)
-    if example:
-        lines.append(colored_message("EXAMPLE:", YELLOW_COLOR))
-        lines.append(f"  {example}\n")
-
-    return "\n".join(lines)
-
-
-def save_data(data: AddressBook, filename: str = FILENAME) -> None:
+def load_notes(filename: str = NOTEBOOK_FILE) -> Notebook:
     """
-    Saves the AddressBook object to a file using pickle.
-    
-    Args:
-        data: The AddressBook object to save
-        filename: The name of the file to save to (default: FILENAME)
-    
-    Raises:
-        Exception: If there's an error during saving
+    Load notebook from pickle file.
+    """
+    return load_pickle(filename, Notebook)
+
+
+def save_data(data: Any, filename: str) -> None:
+    """
+    Save any pickle-serializable object to the given file.
     """
     try:
         with open(filename, "wb") as f:
-            pickle.dump(data, f)
-        print(colored_message(f"Data successfully saved to '{filename}'.", GREEN_COLOR))
+            pickle.dump(data, cast(Any, f))
+        print(colored_message(f"Data saved to '{filename}'.", Color.GREEN))
     except Exception as e:
-        print(colored_message(f"Error saving data to '{filename}': {e}", RED_COLOR))
+        print(colored_message(f"Error saving '{filename}': {e}", Color.RED))
         raise
+
+
+def save_all(book: AddressBook, notes: Notebook) -> None:
+    """
+    Save all application data (address book + notebook) in one call.
+    """
+    save_data(book, ADDRESSBOOK_FILE)
+    save_data(notes, NOTEBOOK_FILE)
+
+
+def command_desc(command: str, desc: str, usage: Optional[str] = None, example: Optional[str] = None) -> Callable[[Callable[..., str]], Callable[..., str]]:
+    """
+    Decorator to add metadata to a command handler.
+
+    Args:
+        command: The string command name.
+        desc: Short description of the command.
+        usage: Optional usage instructions.
+        example: Optional example of command usage.
+
+    Returns:
+        Callable: The same function with metadata attributes added.
+    """
+    def decorator(func: Callable[..., str]) -> Callable[..., str]:
+        # Attach attributes for help generation; mypy cannot track arbitrary attributes, but this is fine at runtime.
+        setattr(func, "command", command)
+        setattr(func, "desc", desc)
+        setattr(func, "usage", usage)
+        setattr(func, "example", example)
+        return func
+
+    return decorator
+
+
+def suggest_command(command: str, commands: list[str], limit: int = 3) -> list[str]:
+    """
+    Suggest similar commands using difflib.get_close_matches.
+    """
+    return difflib.get_close_matches(command, commands, n=limit, cutoff=0.45)
+
+
+def print_help(command: str, usage: str, description: str, example: Optional[str] = None) -> str:
+    """
+    Return a nicely formatted help text for a command.
+    """
+    line = "─" * 50
+    out = [
+        colored_message(line, Color.CYAN),
+        colored_message(f"  HELP: {command}", Color.CYAN),
+        colored_message(line, Color.CYAN),
+        "",
+        colored_message("USAGE:", Color.YELLOW),
+        f"  {usage}\n",
+        colored_message("DESCRIPTION:", Color.YELLOW),
+        f"  {description}\n"
+    ]
+
+    if example:
+        out.append(colored_message("EXAMPLE:", Color.YELLOW))
+        out.append(f"  {example}\n")
+
+    return "\n".join(out)

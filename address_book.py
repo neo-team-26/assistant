@@ -1,6 +1,6 @@
-from typing import List, Optional, Dict, Union, Any
+from typing import List, Optional, Dict, Union, Any, cast
 from collections import UserDict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import re
 
 
@@ -18,7 +18,7 @@ class Field:
         return self._value
 
     @value.setter
-    def value(self, new_value: Any):
+    def value(self, new_value: Any) -> None:
         self._value = new_value
 
 
@@ -40,8 +40,12 @@ class Phone(Field):
         if not (phone_number.isdigit() and len(phone_number) == 10):
             raise ValueError("Phone number must be a 10-digit number.")
 
-    @Field.value.setter
-    def value(self, new_value: str):
+    @property
+    def value(self) -> str:
+        return str(self._value)
+
+    @value.setter
+    def value(self, new_value: str) -> None:
         self._validate_phone(new_value)
         self._value = new_value
 
@@ -64,10 +68,10 @@ class Email(Field):
 
     @property
     def value(self) -> str:
-        return self._value
+        return str(self._value)
 
-    @Field.value.setter
-    def value(self, new_value: str):
+    @value.setter
+    def value(self, new_value: str) -> None:
         self._validate_email(new_value)
         self._value = new_value
 
@@ -81,10 +85,10 @@ class Address(Field):
 
     @property
     def value(self) -> str:
-        return self._value
+        return str(self._value)
 
-    @Field.value.setter
-    def value(self, new_value: str):
+    @value.setter
+    def value(self, new_value: str) -> None:
         # Accept any string for address
         self._value = new_value
 
@@ -105,8 +109,12 @@ class Birthday(Field):
         except ValueError:
             raise ValueError("Invalid date format. Use DD.MM.YYYY")
 
-    @Field.value.setter
-    def value(self, new_value: str):
+    @property
+    def value(self) -> date:
+        return cast(date, self._value)
+
+    @value.setter
+    def value(self, new_value: str) -> None:
         self._validate_birthday(new_value)
         self._value = datetime.strptime(new_value, "%d.%m.%Y").date()
 
@@ -114,7 +122,7 @@ class Birthday(Field):
         if self._value is None:
             return ""
         # Format back to DD.MM.YYYY for display
-        return self._value.strftime("%d.%m.%Y")
+        return cast(date, self._value).strftime("%d.%m.%Y")
 
 
 class Record:
@@ -241,7 +249,7 @@ class Record:
         return ', '.join([p for p in parts if p])
 
 
-class AddressBook(UserDict):
+class AddressBook(UserDict[str, Record]):
     """Class for storing and managing records (Record). Inherits from UserDict."""
 
     def add_record(self, record: Record) -> None:
@@ -252,16 +260,16 @@ class AddressBook(UserDict):
             raise ValueError(f"Contact name '{name}' already exists.")
         self.data[name] = record
 
-    def find_record_by_name(self, name: str) -> Union[Record, None]:
+    def find_record_by_name(self, name: str) -> Optional[Record]:
         return self.data.get(name)
 
-    def find_record_by_phone(self, phone: str) -> Union[Record, None]:
+    def find_record_by_phone(self, phone: str) -> Optional[Record]:
         for record in self.data.values():
             if record.find_phone(phone):
                 return record
         return None
 
-    def find_record_by_email(self, email: str) -> Union[Record, None]:
+    def find_record_by_email(self, email: str) -> Optional[Record]:
         for record in self.data.values():
             if hasattr(record, 'find_email') and record.find_email(email):
                 return record

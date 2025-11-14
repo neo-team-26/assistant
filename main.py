@@ -1,18 +1,30 @@
+import inspect
+from typing import Any, Dict
 from handlers import COMMANDS
+from utils import (
+    parse_input,
+    colored_message,
+    load_addressbook,
+    load_notes,
+    save_all,
+    Color,
+    suggest_command,
+)
 
-from utils import parse_input, colored_message, GREEN_COLOR, RED_COLOR, YELLOW_COLOR, load_data, suggest_command, \
-    save_data, load_notes, NOTEBOOK_FILENAME
+
+book = load_addressbook()
+notes = load_notes()
+
+TARGETS: Dict[type, Any] = {
+    type(book): book,
+    type(notes): notes
+}
 
 
 def main() -> None:
     """
-    The main function that manages the command processing loop,
-    including data loading and saving.
+    Main command loop: loads data, processes user commands, saves on exit.
     """
-
-    book = load_data()
-    notes = load_notes()
-
     print("Welcome to the assistant bot!")
     print("Type 'help' to see available commands. Type 'exit' or 'close' to quit.")
 
@@ -20,9 +32,8 @@ def main() -> None:
         while True:
             try:
                 user_input: str = input("Enter a command: ").strip()
-            except EOFError:
-                # Handle Ctrl+D (EOF) gracefully
-                print(colored_message("\nGood bye!", GREEN_COLOR))
+            except (EOFError, KeyboardInterrupt):
+                print(colored_message("\nGood bye!", Color.GREEN))
                 break
 
             if not user_input:
@@ -30,20 +41,13 @@ def main() -> None:
 
             command, args = parse_input(user_input)
 
-            if command in ["close", "exit"]:
-                print(colored_message("Good bye!", GREEN_COLOR))
+            if command in ("exit", "close"):
+                print(colored_message("Good bye!", Color.GREEN))
                 break
 
             handler = COMMANDS.get(command)
-
-            if handler:
-                if "note" in handler.__name__:
-                    print(handler(args, notes))
-                else:
-                    print(handler(args, book))
-
-            else:
-                print(colored_message("Invalid command.", RED_COLOR))
+            if handler is None:
+                print(colored_message("Invalid command.", Color.RED))
                 suggestions = suggest_command(command, list(COMMANDS.keys()))
                 if suggestions:
                     print("\nThe most similar commands are:")
@@ -51,11 +55,24 @@ def main() -> None:
                         print(f"  {s}")
                     print()
                 else:
-                    print(colored_message("No similar commands found.", YELLOW_COLOR))
-    
+                    print(colored_message("No similar commands found.", Color.YELLOW))
+                continue
+
+            sig = inspect.signature(handler)
+            params = list(sig.parameters.values())
+
+            if len(params) > 1 and params[1].annotation in TARGETS:
+                target = TARGETS[params[1].annotation]
+            else:
+                target = None
+
+            try:
+                print(handler(args, target))
+            except Exception as e:
+                print(colored_message(str(e), Color.RED))
+
     finally:
-        save_data(book)
-        save_data(notes, NOTEBOOK_FILENAME)
+        save_all(book, notes)
 
 
 if __name__ == "__main__":
