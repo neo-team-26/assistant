@@ -386,17 +386,129 @@ def show_help(args: List[str], book: AddressBook) -> str:
         return "\n".join(summary_lines)
 
 
-# Mapping of command names to their handler functions
+@command_desc(
+    command="change",
+    usage="change [name] [old_phone] [new_phone]",
+    desc="Change an existing phone number for a contact.",
+    example="change John 0123456789 0987654321"
+)
+@input_error
+def change_contact(args: List[str], book: AddressBook) -> str:
+    if len(args) < 3:
+        raise ValueError("Must provide name, old phone and new phone.")
+    if len(args) > 3:
+        raise ValueError("Too many arguments. Expected: [name] [old_phone] [new_phone]")
+
+    name, old_phone, new_phone = args
+
+    # Check if new phone is already registered to a different contact
+    owner_record = book.find_record_by_phone(new_phone)
+    if owner_record is not None and owner_record.name.value.lower() != name.lower():
+        raise ValueError(f"Phone number '{new_phone}' is already registered to contact '{owner_record.name.value}'.")
+
+    record = book.find_record_by_name(name)
+    if record is None:
+        raise KeyError(f"Contact name '{name}' not found.")
+
+    record.edit_phone(old_phone, new_phone)
+    return colored_message("Phone changed.", GREEN_COLOR)
+
+
+@command_desc(
+    command="add-birthday",
+    usage="add-birthday [name] [DD.MM.YYYY]",
+    desc="Adds a birthday to a contact (creates contact if missing).",
+    example="add-birthday John 01.01.1990"
+)
+@input_error
+def add_birthday(args: List[str], book: AddressBook) -> str:
+    """Add a birthday to a contact. If contact doesn't exist, create it."""
+    if len(args) < 2:
+        raise ValueError("Must provide name and birthday date.")
+    if len(args) > 2:
+        raise ValueError("Too many arguments. Expected: [name] [DD.MM.YYYY]")
+
+    name, birthday_date = args
+    record = book.find_record_by_name(name)
+    message = "Birthday added."
+
+    if record is None:
+        record = Record(name)
+        book.add_record(record)
+        message = "Contact added."
+
+    record.add_birthday(birthday_date)
+    return colored_message(message, GREEN_COLOR)
+
+
+@command_desc(
+    command="show-birthday",
+    usage="show-birthday [name]",
+    desc="Displays the specified contact's birthday.",
+    example="show-birthday John"
+)
+@input_error
+def show_birthday(args: List[str], book: AddressBook) -> str:
+    """Show a contact's birthday in DD.MM.YYYY format."""
+    if len(args) < 1:
+        raise ValueError("Must provide contact name.")
+    if len(args) > 1:
+        raise ValueError("Too many arguments. Expected: [name]")
+
+    name = args[0]
+    record = book.find_record_by_name(name)
+    if record is None:
+        raise KeyError(f"Contact name '{name}' not found.")
+
+    if not record.birthday:
+        return f"Contact {name} has no birthday saved."
+
+    return f"{name}: {record.birthday}"
+
+
+@command_desc(
+    command="birthdays",
+    usage="birthdays [days]",
+    desc="Lists upcoming birthdays grouped by weekday.",
+    example="birthdays 7"
+)
+@input_error
+def birthdays(args: List[str], book: AddressBook) -> str:
+    """List upcoming birthdays grouped by weekday. Optional single arg: days (int)."""
+    if len(args) > 1:
+        raise ValueError("Too many arguments. Expected: [days]")
+
+    days = 7
+    if len(args) == 1:
+        try:
+            days = int(args[0])
+        except ValueError:
+            raise ValueError("Days must be an integer.")
+        if days <= 0:
+            raise ValueError("Days must be a positive integer.")
+
+    upcoming = book.get_upcoming_birthdays(days=days)
+    if not upcoming:
+        return "No upcoming birthdays found."
+
+    lines: List[str] = []
+    for day, names in upcoming.items():
+        lines.append(f"{day}: {', '.join(names)}")
+
+    return "\n".join(lines)
+ 
+
+
 COMMANDS = {
     # TODO: uncomment it after implementing the functions
     "add": add_contact,
-    # "change": change_contact,
+    "change": change_contact,
     "delete": delete_contact,
     "phone": show_phone,
     "all": show_all,
-    # "add-birthday": add_birthday,
-    # "show-birthday": show_birthday,
-    # "birthdays": birthdays,
+    "add-birthday": add_birthday,
+    "show-birthday": show_birthday,
+    "birthdays": birthdays,
     "add-email": add_email,
     "remove-email": remove_email,
     "change-email": change_email,
