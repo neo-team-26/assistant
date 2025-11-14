@@ -301,11 +301,38 @@ def show_help(args: List[str], book: AddressBook) -> str:
         return "\n".join(summary_lines)
 
 
-# Mapping of command names to their handler functions
+@command_desc(
+    command="change",
+    usage="change [name] [old_phone] [new_phone]",
+    desc="Change an existing phone number for a contact.",
+    example="change John 0123456789 0987654321"
+)
+@input_error
+def change_contact(args: List[str], book: AddressBook) -> str:
+    if len(args) < 3:
+        raise ValueError("Must provide name, old phone and new phone.")
+    if len(args) > 3:
+        raise ValueError("Too many arguments. Expected: [name] [old_phone] [new_phone]")
+
+    name, old_phone, new_phone = args
+
+    # Check if new phone is already registered to a different contact
+    owner_record = book.find_record_by_phone(new_phone)
+    if owner_record is not None and owner_record.name.value.lower() != name.lower():
+        raise ValueError(f"Phone number '{new_phone}' is already registered to contact '{owner_record.name.value}'.")
+
+    record = book.find_record_by_name(name)
+    if record is None:
+        raise KeyError(f"Contact name '{name}' not found.")
+
+    record.edit_phone(old_phone, new_phone)
+    return colored_message("Phone changed.", GREEN_COLOR)
+
+
 COMMANDS = {
     # TODO: uncomment it after implementing the functions
     "add": add_contact,
-    # "change": change_contact,
+    "change": change_contact,
     "delete": delete_contact,
     "phone": show_phone,
     "all": show_all,
