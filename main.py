@@ -13,39 +13,41 @@ def main() -> None:
     print("Welcome to the assistant bot!")
     print("Type 'help' to see available commands. Type 'exit' or 'close' to quit.")
 
-    while True:
-        try:
-            user_input: str = input("Enter a command: ").strip()
-        except EOFError:
-            save_data(book)
-            # Handle Ctrl+D (EOF) gracefully
-            print(colored_message("\nGood bye!", GREEN_COLOR))
-            break
+    try:
+        while True:
+            try:
+                user_input: str = input("Enter a command: ").strip()
+            except EOFError:
+                # Handle Ctrl+D (EOF) gracefully
+                print(colored_message("\nGood bye!", GREEN_COLOR))
+                break
 
-        if not user_input:
-            continue
+            if not user_input:
+                continue
 
-        command, args = parse_input(user_input)
+            command, args = parse_input(user_input)
 
-        if command in ["close", "exit"]:
-            save_data(book)
-            print(colored_message("Good bye!", GREEN_COLOR))
-            break
+            if command in ["close", "exit"]:
+                print(colored_message("Good bye!", GREEN_COLOR))
+                break
 
-        handler = COMMANDS.get(command)
+            handler = COMMANDS.get(command)
 
-        if handler:
-            print(handler(args, book))
-        else:
-            print(colored_message("Invalid command.", RED_COLOR))
-            suggestions = suggest_command(command, list(COMMANDS.keys()))
-            if suggestions:
-                print("\nThe most similar commands are:")
-                for s in suggestions:
-                    print(f"  {s}")
-                print()
+            if handler:
+                print(handler(args, book))
             else:
-                print(colored_message("No similar commands found.", YELLOW_COLOR))
+                print(colored_message("Invalid command.", RED_COLOR))
+                suggestions = suggest_command(command, list(COMMANDS.keys()))
+                if suggestions:
+                    print("\nThe most similar commands are:")
+                    for s in suggestions:
+                        print(f"  {s}")
+                    print()
+                else:
+                    print(colored_message("No similar commands found.", YELLOW_COLOR))
+    
+    finally:
+        save_data(book)
 
 
 if __name__ == "__main__":
