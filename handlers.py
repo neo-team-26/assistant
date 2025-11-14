@@ -329,6 +329,91 @@ def change_contact(args: List[str], book: AddressBook) -> str:
     return colored_message("Phone changed.", GREEN_COLOR)
 
 
+@command_desc(
+    command="add-birthday",
+    usage="add-birthday [name] [DD.MM.YYYY]",
+    desc="Adds a birthday to a contact (creates contact if missing).",
+    example="add-birthday John 01.01.1990"
+)
+@input_error
+def add_birthday(args: List[str], book: AddressBook) -> str:
+    """Add a birthday to a contact. If contact doesn't exist, create it."""
+    if len(args) < 2:
+        raise ValueError("Must provide name and birthday date.")
+    if len(args) > 2:
+        raise ValueError("Too many arguments. Expected: [name] [DD.MM.YYYY]")
+
+    name, birthday_date = args
+    record = book.find_record_by_name(name)
+    message = "Birthday added."
+
+    if record is None:
+        record = Record(name)
+        book.add_record(record)
+        message = "Contact added."
+
+    record.add_birthday(birthday_date)
+    return colored_message(message, GREEN_COLOR)
+
+
+@command_desc(
+    command="show-birthday",
+    usage="show-birthday [name]",
+    desc="Displays the specified contact's birthday.",
+    example="show-birthday John"
+)
+@input_error
+def show_birthday(args: List[str], book: AddressBook) -> str:
+    """Show a contact's birthday in DD.MM.YYYY format."""
+    if len(args) < 1:
+        raise ValueError("Must provide contact name.")
+    if len(args) > 1:
+        raise ValueError("Too many arguments. Expected: [name]")
+
+    name = args[0]
+    record = book.find_record_by_name(name)
+    if record is None:
+        raise KeyError(f"Contact name '{name}' not found.")
+
+    if not record.birthday:
+        return f"Contact {name} has no birthday saved."
+
+    return f"{name}: {record.birthday}"
+
+
+@command_desc(
+    command="birthdays",
+    usage="birthdays [days]",
+    desc="Lists upcoming birthdays grouped by weekday.",
+    example="birthdays 7"
+)
+@input_error
+def birthdays(args: List[str], book: AddressBook) -> str:
+    """List upcoming birthdays grouped by weekday. Optional single arg: days (int)."""
+    if len(args) > 1:
+        raise ValueError("Too many arguments. Expected: [days]")
+
+    days = 7
+    if len(args) == 1:
+        try:
+            days = int(args[0])
+        except ValueError:
+            raise ValueError("Days must be an integer.")
+        if days <= 0:
+            raise ValueError("Days must be a positive integer.")
+
+    upcoming = book.get_upcoming_birthdays(days=days)
+    if not upcoming:
+        return "No upcoming birthdays found."
+
+    lines: List[str] = []
+    for day, names in upcoming.items():
+        lines.append(f"{day}: {', '.join(names)}")
+
+    return "\n".join(lines)
+ 
+
+
 COMMANDS = {
     # TODO: uncomment it after implementing the functions
     "add": add_contact,
@@ -336,9 +421,9 @@ COMMANDS = {
     "delete": delete_contact,
     "phone": show_phone,
     "all": show_all,
-    # "add-birthday": add_birthday,
-    # "show-birthday": show_birthday,
-    # "birthdays": birthdays,
+    "add-birthday": add_birthday,
+    "show-birthday": show_birthday,
+    "birthdays": birthdays,
     "add-email": add_email,
     "remove-email": remove_email,
     "change-email": change_email,

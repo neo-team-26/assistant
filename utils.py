@@ -149,3 +149,24 @@ def print_help(command: str, usage: str, description: str,
         lines.append(f"  {example}\n")
 
     return "\n".join(lines)
+
+    
+
+def save_data(data: AddressBook, filename: str = FILENAME) -> None:
+    """
+    Saves the AddressBook object to a file using pickle.
+    
+    Args:
+        data: The AddressBook object to save
+        filename: The name of the file to save to (default: FILENAME)
+    
+    Raises:
+        Exception: If there's an error during saving
+    """
+    try:
+        with open(filename, "wb") as f:
+            pickle.dump(data, f)
+        print(colored_message(f"Data successfully saved to '{filename}'.", GREEN_COLOR))
+    except Exception as e:
+        print(colored_message(f"Error saving data to '{filename}': {e}", RED_COLOR))
+        raise
