@@ -1,6 +1,7 @@
 from typing import List
 
 from address_book import AddressBook, Record
+from assistant.notebook import Notebook
 from utils import colored_message, GREEN_COLOR, YELLOW_COLOR, CYAN_COLOR, command_desc, input_error, print_help
 from typing import List
 
@@ -266,6 +267,90 @@ To delete phone please set record name and phone number as arguments""")
 
 
 @command_desc(
+    command="add-note",
+    usage="add-note [name] [text]",
+    desc="Adds note to notebook with specified name",
+    example="add-note homework 'Do it today!!!'"
+)
+@input_error
+def add_note(args: List[str], notebook: Notebook) -> None:
+    if len(args) != 2:
+        raise ValueError("Please set Note name and text(in quotation marks)")
+    name, text = args
+    notebook.add_note(name, text)
+    return colored_message(f"Added note {name} with text:{text}", GREEN_COLOR)
+
+
+@command_desc(
+    command="edit-note",
+    usage="edit-note [name] [text]",
+    desc="Changes note in notebook for specified name",
+    example="edit-note homework 'Do it today!!!'"
+)
+@input_error
+def edit_note(args: List[str], notebook: Notebook) -> None:
+    if len(args) != 2:
+        raise ValueError("Please set note name and text(in quotation marks)")
+    name, text = args
+    notebook.edit_note(name, text)
+    return colored_message(f"Changed note {name} to:{text}", GREEN_COLOR)
+
+
+@command_desc(
+    command="delete-note",
+    usage="delete-note [name]",
+    desc="Deletes note with specified name in notebook ",
+    example="delete-note homework"
+)
+@input_error
+def delete_note(args: List[str], notebook: Notebook) -> None:
+    if len(args) != 1:
+        raise ValueError("Please set note name")
+    name = args[0]
+    notebook.delete_note(name)
+    return colored_message(f"Deleted note {name}", GREEN_COLOR)
+
+
+@command_desc(
+    command="all-notes",
+    usage="all-notes",
+    desc="Lists all notes in notebook ",
+    example="all-notes"
+)
+@input_error
+def all_notes(args: List[str], notebook: Notebook) -> List[str]:
+    if args:
+        raise ValueError("The 'all-nptes' command does not require arguments.")
+    if not notebook:
+        return "No notes saved."
+    return notebook.list_notes()
+
+
+@command_desc(
+    command="find-notes",
+    usage="find-notes [key words list, space separated]",
+    desc="Lists all notes that contains",
+    example="find-notes now today"
+)
+def find_notes(*args: str):
+    return list(args)[-1].find_notes(args)
+
+
+@command_desc(
+    command="get-note",
+    usage="get-note [name]",
+    desc="Shows note with specified name",
+    example="get-note homework"
+)
+@input_error
+def get_note(args: List[str], notebook: Notebook) -> None:
+    if len(args) != 1:
+        raise ValueError("Please set note name")
+    name = args[0]
+    return notebook.get_note(name)
+
+
+@command_desc(
     command="help",
     usage="help [command]",
     desc="Show help information for commands.",
@@ -430,6 +515,12 @@ COMMANDS = {
     "add-address": add_address,
     "remove-address": remove_address,
     "change-address": change_address,
+    "add-note": add_note,
+    "edit-note":  edit_note,
+    "delete-note": delete_note,
+    "all-notes": all_notes,
+    "find-notes": find_notes,
+    "get-note": get_note,
     "help": show_help,
 }
 
