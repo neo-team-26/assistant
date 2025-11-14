@@ -115,10 +115,10 @@ def suggest_command(command: str, commands: list[str], limit: int = 3):
         score = difflib.SequenceMatcher(None, command, cmd).ratio()
         similarity.append((cmd, score))
 
-    # Сортируем по убыванию совпадения
+    # Sort by descending similarity score
     similarity.sort(key=lambda x: x[1], reverse=True)
 
-    # Отбираем только действительно похожие
+    # Return only truly similar commands
     result = [cmd for cmd, score in similarity if score > 0.45][:limit]
 
     return result
@@ -128,7 +128,7 @@ def print_help(command: str, usage: str, description: str,
                example: str = None) -> str:
     """Return formatted help string for a command."""
     lines = []
-    # Верхний блок
+    # Top border
     line = "─" * 50
     lines.append(colored_message(line, CYAN_COLOR))
     lines.append(colored_message(f"  HELP: {command}", CYAN_COLOR))
@@ -143,7 +143,7 @@ def print_help(command: str, usage: str, description: str,
     lines.append(colored_message("DESCRIPTION:", YELLOW_COLOR))
     lines.append(f"  {description}\n")
 
-    # Example (не обязательный блок)
+    # Example (optional section)
     if example:
         lines.append(colored_message("EXAMPLE:", YELLOW_COLOR))
         lines.append(f"  {example}\n")
