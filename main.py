@@ -68,6 +68,9 @@ def main() -> None:
 
             try:
                 print(handler(args, target))
+            except KeyboardInterrupt as e:
+                msg = str(e) if str(e) else "\nOperation cancelled by user."
+                print(colored_message(msg, Color.YELLOW))
             except Exception as e:
                 print(colored_message(str(e), Color.RED))
 
