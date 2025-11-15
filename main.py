@@ -48,10 +48,10 @@ def main() -> None:
             handler = COMMANDS.get(command)
             if handler is None:
                 print(colored_message("Invalid command.", Color.RED))
-                suggestions = suggest_command(command, list(COMMANDS.keys()))
+                suggestions = suggest_command(command, list(COMMANDS.keys()), limit=5)
                 if suggestions:
-                    print("\nThe most similar commands are:")
-                    for s in suggestions:
+                    print("\nDid you mean:")
+                    for s in suggestions[:5]:
                         print(f"  {s}")
                     print()
                 else:
