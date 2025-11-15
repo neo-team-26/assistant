@@ -145,7 +145,7 @@ def command_desc(command: str, desc: str, usage: Optional[str] = None, example: 
     return decorator
 
 
-def suggest_command(command: str, commands: list[str], limit: int = 3) -> list[str]:
+def suggest_command(command: str, commands: list[str], limit: int = 5) -> list[str]:
     """
     Suggest similar commands using difflib.get_close_matches.
     """
