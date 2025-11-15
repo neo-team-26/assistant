@@ -616,6 +616,46 @@ def birthdays(args: List[str], book: AddressBook) -> str:
     return "\n".join(lines)
 
 # TODO: figure out why static type checkers fail to check this properly
+@command_desc(
+    command="find-contact",
+    usage="find-contact [field] [value]",
+    desc="Find a contact by name, phone, address, or birthday.",
+    example="find-contact phone 0123456789"
+)
+@input_error
+def find_contact(args: List[str], book: AddressBook) -> str:
+    if len(args) < 2:
+        raise ValueError("Must provide field and value. Usage: find-contact [field] [value]")
+    if len(args) > 2:
+        raise ValueError("Too many arguments. Usage: find-contact [field] [value]")
+
+    field, value = args
+    field = field.lower()
+    found: list[Record] = []
+
+    if field == "name":
+        rec = book.find_record_by_name(value)
+        if rec:
+            found.append(rec)
+    elif field == "phone":
+        rec = book.find_record_by_phone(value)
+        if rec:
+            found.append(rec)
+    elif field == "address":
+        for rec in book.data.values():
+            if any(addr.value == value for addr in rec.addresses):
+                found.append(rec)
+    elif field == "birthday":
+        for rec in book.data.values():
+            if rec.birthday and str(rec.birthday) == value:
+                found.append(rec)
+    else:
+        raise ValueError("Field must be one of: name, phone, address, birthday.")
+
+    if not found:
+        return f"No contact found for {field}: {value}"
+    return "\n".join(str(r) for r in found)
+
 COMMANDS: dict[str, Handler] = {
     # TODO: uncomment it after implementing the functions
     "add": add_contact,
@@ -641,4 +681,5 @@ COMMANDS: dict[str, Handler] = {
     "help": show_help,
     "add-tags": add_tags,
     "remove-tag": remove_tag,
+    "find-contact": find_contact,
 }
