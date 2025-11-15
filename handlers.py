@@ -658,10 +658,11 @@ def find_contact(args: List[str], book: AddressBook) -> str:
 
 COMMANDS: dict[str, Handler] = {
     # TODO: uncomment it after implementing the functions
-    "add": add_contact,
-    "change": change_contact,
-    "delete": delete_contact,
-    "phone": show_phone,
+    "find-contact": find_contact,
+    "add-contact": add_contact,
+    "change-contact": change_contact,
+    "delete-contact": delete_contact,
+    "show-phone": show_phone,
     "all": show_all,
     "add-birthday": add_birthday,
     "show-birthday": show_birthday,
@@ -681,5 +682,4 @@ COMMANDS: dict[str, Handler] = {
     "help": show_help,
     "add-tags": add_tags,
     "remove-tag": remove_tag,
-    "find-contact": find_contact,
 }
