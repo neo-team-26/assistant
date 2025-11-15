@@ -68,14 +68,14 @@ def create_contact(args: List[str], book: AddressBook) -> str:
 
 
 @command_desc(
-    command="create-contact-full",
-    usage="create-contact-full",
+    command="create-contact-wizard",
+    usage="create-contact-wizard",
     desc="Interactive command to create a new contact with multiple fields (name, phone, birthday, email, address).",
-    example="create-contact-full"
+    example="create-contact-wizard"
 )
-def create_contact_full(args: List[str], book: AddressBook) -> str:
+def create_contact_wizard(args: List[str], book: AddressBook) -> str:
     if args:
-        raise ValueError("The 'add-contact-full' command does not require arguments.")
+        raise ValueError("The 'create-contact-wizard' command does not require arguments.")
 
     print("Enter contact details. Required fields are marked with *")
     name = input("* Contact name: ").strip()
@@ -906,7 +906,7 @@ COMMANDS: dict[str, Handler] = {
     "all": show_all,
     "find-contact": find_contact,
     "create-contact": create_contact,
-    "create-contact-full": create_contact_full,
+    "create-contact-wizard": create_contact_wizard,
     "delete-contact": delete_contact,
     "update-name": update_name,
     "show-phone": show_phone,
