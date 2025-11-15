@@ -43,6 +43,19 @@ git clone https://github.com/neo-team-26/assistant
 cd assistant
 ```
 
+## Interactive prompts and cancellation
+
+- Some commands are interactive (for example `create-contact-wizard` or when multiple
+  contacts match a name and the program asks you to pick a Contact ID).
+- Pressing `Ctrl+C` during an interactive prompt will cancel the current operation
+  gracefully and return you to the main prompt (no traceback).
+
+## Notes
+
+- The CLI stores data in `addressbook.pkl` and `notebook.pkl` in the project folder.
+- Command names and behaviors may be updated; use `help` for the latest command list.
+
+
 ### 2. Create a virtual environment
 
 Create a virtual environment to manage dependencies:
@@ -64,26 +77,28 @@ python -m venv .venv
 
 ### 4. Command List
 
-| Command            | Arguments / Format           | Description                                                                 | Example                                        |
-| ------------------ | ---------------------------- | --------------------------------------------------------------------------- | ---------------------------------------------- |
-| **add**            | `<name> <phone>`             | Adds a new contact with the specified name and phone number.                | `add John +380501234567`                       |
-| **change**         | `<name> <new_phone>`         | Updates the phone number of an existing contact.                            | `change John +380509998877`                    |
-| **delete**         | `<name>` or `<name> <phone>` | Deletes a contact or removes a specific phone number.                       | `delete John` / `delete John +380501234567`    |
-| **phone**          | `<name>`                     | Displays all phone numbers associated with the contact.                     | `phone John`                                   |
-| **all**            | —                            | Shows all contacts stored in the address book.                              | `all`                                          |
-| **add-birthday**   | `<name> <DD.MM.YYYY>`        | Adds a birthday to a contact (creates the contact if it does not exist).    | `add-birthday John 25.12.1990`                 |
-| **show-birthday**  | `<name>`                     | Displays the birthday of the specified contact.                             | `show-birthday John`                           |
-| **birthdays**      | `<days>`                     | Shows upcoming birthdays within the next `<days>` days, grouped by weekday. | `birthdays 7`                                  |
-| **add-email**      | `<name> <email>`             | Adds an email address to a contact.                                         | `add-email John john@example.com`              |
-| **remove-email**   | `<name> <email>`             | Removes the specified email address from a contact.                         | `remove-email John john@example.com`           |
-| **change-email**   | `<name> <new_email>`         | Replaces the contact’s email with a new one.                                | `change-email John new@example.com`            |
-| **add-address**    | `<name> <address>`           | Adds a physical address to a contact.                                       | `add-address John "Kyiv, Main St 10"`          |
-| **remove-address** | `<name>`                     | Removes the contact’s physical address.                                     | `remove-address John`                          |
-| **change-address** | `<name> <new_address>`       | Updates the physical address of the contact.                                | `change-address John "Lviv, Freedom Sq 2"`     |
-| **add-note**       | `<title> <text>`             | Adds a note with a title and text.                                          | `add-note Shopping "Buy apples and milk"`      |
-| **edit-note**      | `<title> <new_text>`         | Edits an existing note.                                                     | `edit-note Shopping "Buy apples, milk, bread"` |
-| **delete-note**    | `<title>`                    | Deletes the note with the specified title.                                  | `delete-note Shopping`                         |
-| **all-notes**      | —                            | Displays all notes in the notebook.                                         | `all-notes`                                    |
-| **find-notes**     | `<keyword>`                  | Lists all notes that contain the given keyword.                             | `find-notes milk`                              |
-| **get-note**       | `<title>`                    | Shows the full content of the specified note.                               | `get-note Shopping`                            |
-| **help**           | —                            | Displays help information for all commands.                                 | `help`                                         |
+| Command            | Arguments / Format                       | Description                                                                 | Example                                            |
+| ------------------ | ---------------------------------------- | --------------------------------------------------------------------------- | -------------------------------------------------- |
+| **create-contact** | `<name> <phone>`                         | Create a new contact (requires a phone).                                    | `create-contact John 0123456789`                   |
+| **create-contact-wizard** | (interactive)                       | Interactive flow to create a contact with multiple fields.                  | `create-contact-wizard`                              |
+| **show-phone**     | `<name>`                                 | If one contact matches: shows the contact's phone(s). If multiple matches: shows name, ID, phones and other details (emails, addresses, birthday). | `show-phone John`                                   |
+| **add-phone**      | `<name> <phone>`                         | Adds a phone number to the specified contact (will prompt if multiple contacts with that name). | `add-phone John 0987654321`                        |
+| **update-phone**   | `<name> <old_phone> <new_phone>`         | Replace an existing phone for a contact.                                     | `update-phone John 0123456789 0987654321`         |
+| **delete-phone**   | `<name> <phone>`                         | Delete a phone from a contact.                                               | `delete-phone John 0123456789`                    |
+| **all**            | —                                        | Show all contacts.                                                            | `all`                                              |
+| **add-birthday**   | `<name> <DD.MM.YYYY>`                    | Adds a birthday to a contact (creates contact if missing).                   | `add-birthday John 25.12.1990`                    |
+| **show-birthday**  | `<name>`                                 | Shows birthday for the contact (prompts if multiple matches).               | `show-birthday John`                               |
+| **birthdays**      | `<days>`                                 | Lists upcoming birthdays within next `<days>` days.                         | `birthdays 7`                                      |
+| **add-email**      | `<name> <email>`                         | Adds an email address to a contact.                                          | `add-email John john@example.com`                 |
+| **remove-email**   | `<name> <email>`                         | Removes an email from a contact.                                             | `remove-email John john@example.com`              |
+| **change-email**   | `<name> <old_email> <new_email>`         | Update an email for a contact.                                               | `change-email John old@example.com new@example.com`|
+| **add-address**    | `<name> <address>`                       | Adds a physical address to a contact.                                        | `add-address John "Kyiv, Main St 10"`            |
+| **remove-address** | `<name> <address>`                       | Removes the specified address from a contact.                                | `remove-address John "Kyiv, Main St 10"`         |
+| **change-address** | `<name> <old_address> <new_address>`     | Change an address for a contact.                                              | `change-address John "Old" "New"`             |
+| **add-note**       | `<title> <text> [#tags]`                 | Add a note with optional tags.                                                | `add-note Shopping "Buy apples" #groceries`     |
+| **edit-note**      | `<title> <text>`                         | Edit an existing note.                                                        | `edit-note Shopping "Buy apples and milk"`      |
+| **delete-note**    | `<title>`                                | Delete a note.                                                                | `delete-note Shopping`                            |
+| **all-notes**      | —                                        | List all notes.                                                               | `all-notes`                                        |
+| **find-notes**     | `<filters>`                              | Search notes by keywords and tags (see `help find-notes`).                   | `find-notes report +financial -draft #urgent`    |
+| **show-note**      | `<title>`                                | Show a note's content.                                                        | `show-note Shopping`                              |
+| **help**           | —                                        | Show detailed help for commands.                                              | `help`                                             |

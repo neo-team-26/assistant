@@ -2,6 +2,7 @@ from typing import List, Optional, Dict, Union, Any, cast
 from collections import UserDict
 from datetime import datetime, timedelta, date
 import re
+import uuid
 
 
 class Field:
@@ -129,6 +130,7 @@ class Record:
     """Class for storing contact information (name, list of phones, and birthday)."""
 
     def __init__(self, name: str):
+        self.contact_id: str = str(uuid.uuid4())[:8]  # Short 8-char UUID for display
         self.name: Name = Name(name)
         self.phones: List[Phone] = []
         self.emails: List[Email] = []
@@ -238,7 +240,7 @@ class Record:
         email_str = '; '.join(e.value for e in self.emails)
         addr_str = '; '.join(a.value for a in self.addresses)
         birthday_str = f", birthday: {self.birthday}" if self.birthday else ""
-        parts = [f"Contact name: {self.name.value}"]
+        parts = [f"Contact ID: {self.contact_id}, name: {self.name.value}"]
         parts.append(f"phones: {phone_str}")
         if email_str:
             parts.append(f"emails: {email_str}")
@@ -253,15 +255,29 @@ class AddressBook(UserDict[str, Record]):
     """Class for storing and managing records (Record). Inherits from UserDict."""
 
     def add_record(self, record: Record) -> None:
-        name = record.name.value
-        if name in self.data:
-            # We allow adding a record with an existing name if we are just adding a phone
-            # However, for new records, we enforce uniqueness.
-            raise ValueError(f"Contact name '{name}' already exists.")
-        self.data[name] = record
+        contact_id = record.contact_id
+        if contact_id in self.data:
+            raise ValueError(f"Contact ID '{contact_id}' already exists.")
+        self.data[contact_id] = record
 
     def find_record_by_name(self, name: str) -> Optional[Record]:
-        return self.data.get(name)
+        for record in self.data.values():
+            if record.name.value.lower() == name.lower():
+                return record
+        return None
+
+    def find_all_records_by_name(self, name: str) -> List[Record]:
+        matching = []
+        for record in self.data.values():
+            if record.name.value.lower() == name.lower():
+                matching.append(record)
+        return matching
+
+    def find_record_by_contact_id(self, contact_id: str) -> Optional[Record]:
+        for record in self.data.values():
+            if record.contact_id == contact_id:
+                return record
+        return None
 
     def find_record_by_phone(self, phone: str) -> Optional[Record]:
         for record in self.data.values():
@@ -275,11 +291,11 @@ class AddressBook(UserDict[str, Record]):
                 return record
         return None
 
-    def delete(self, name: str) -> None:
-        if name in self.data:
-            del self.data[name]
+    def delete(self, contact_id: str) -> None:
+        if contact_id in self.data:
+            del self.data[contact_id]
         else:
-            raise KeyError(f"Contact name '{name}' not found for deletion.")
+            raise KeyError(f"Contact ID '{contact_id}' not found for deletion.")
 
     def get_upcoming_birthdays(self, days: int = 7) -> Dict[str, List[str]]:
         upcoming_birthdays: Dict[str, List[str]] = {}

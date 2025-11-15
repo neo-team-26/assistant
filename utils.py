@@ -4,6 +4,7 @@ from enum import Enum
 from functools import wraps
 from typing import List, Tuple, Callable, Any, Protocol, TypeVar, Optional, Union, cast
 import difflib
+import uuid
 
 from address_book import AddressBook
 from notebook import Notebook
@@ -89,9 +90,6 @@ def load_pickle(filename: str, factory: Callable[[], U]) -> U:
 
 
 def load_addressbook(filename: str = ADDRESSBOOK_FILE) -> AddressBook:
-    """
-    Load address book from pickle file.
-    """
     return load_pickle(filename, AddressBook)
 
 
