@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=45.0", "wheel"]  # Changed from 61.0 to 45.0
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "personal-assistant"
+version = "1.0.0"
+description = "CLI Address Book and Notes Manager"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "mypy==1.18.2",
+    "mypy_extensions==1.1.0",
+    "pathspec==0.12.1", 
+    "typing_extensions==4.15.0",
+]
+
+[project.scripts]
+assistant = "main:main"
+
+[tool.setuptools]
+py-modules = ["main", "address_book", "handlers", "notebook", "utils"]
