@@ -102,3 +102,32 @@ python -m venv .venv
 | **find-notes**     | `<filters>`                              | Search notes by keywords and tags (see `help find-notes`).                   | `find-notes report +financial -draft #urgent`    |
 | **show-note**      | `<title>`                                | Show a note's content.                                                        | `show-note Shopping`                              |
 | **help**           | —                                        | Show detailed help for commands.                                              | `help`                                             |
+
+
+
+Build and Install Instructions
+## macOS / Linux
+# Step 1: Install build tools
+python3 -m pip install build
+
+# Step 2: Build the package
+python3 -m build
+
+# Step 3: Install the package
+python3 -m pip install dist/personal_assistant-1.0.0-py3-none-any.whl
+
+# Run the assistant
+assistant
+
+## Windows
+# Step 1: Install build tools
+py -m pip install build
+
+# Step 2: Build the package
+py -m build
+
+# Step 3: Install the package
+py -m pip install dist\personal_assistant-1.0.0-py3-none-any.whl
+
+# Run the assistant
+assistant
