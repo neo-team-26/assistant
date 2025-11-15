@@ -22,60 +22,118 @@ The **Personal Assistant** is a command-line application designed to help you or
 - All contacts and notes are automatically saved on the user’s disk.
 - The assistant can be restarted at any time without losing data.
 
-
 ---
 
 ## Requirements
 
-- Python 3.10+ (or the version required by your project)
-- `pip` (comes with most Python installations)
+- ```Python 3.10+```
+- ```pip``` (comes with most Python installations)
 
 ---
+## Installation and Usage (End-User)
 
-## Installation
+This section describes how to install and run the `Personal Assistant` as a standalone package, ensuring it can be used anywhere a user has Python installed.
 
-### 1. Clone the repository
-
-If you haven’t already:
+### 1. Clone the Repository 
+If you haven't already:
 
 ```bash
 git clone https://github.com/neo-team-26/assistant
 cd assistant
+````
+
+### 2. Create and Activate a Virtual Environment
+
+> **Note:** These commands assume Python 3 is installed.
+> On macOS/Linux, use `python3` if `python` points to Python 2.
+> On Windows, use `py` if `python` does not work.
+> You can verify by running `python --version`, `python3 --version`, or `py --version` — the one that shows **Python 3.x.x** is the correct command.
+
+
+Create a virtual environment:
+```bash
+python -m venv .venv
+````
+
+Activate the environment:
+
+On Windows:
+
+```bash
+.venv\Scripts\activate
+````
+
+On macOS/Linux:
+
+```bash
+source .venv/bin/activate
+````
+
+### 3. Build and Install the Package
+
+Install build tools
+
+```bash
+python -m pip install build
+````
+
+Build the package (```.whl``` file)
+
+```bash
+python -m build
 ```
 
-## Interactive prompts and cancellation
+Install the package
+
+```bash
+python -m pip install dist/personal_assistant-1.0.0-py3-none-any.whl
+```
+
+### 4. Run the Assistant
+
+After successful installation, you can launch the assistant using the command:
+
+```bash
+assistant
+```
+
+---
+
+## Installation for Development
+
+If you plan to modify the code, you must set up a virtual environment to manage dependencies and install the necessary development tools.
+
+### 1. Install all dependencies
+
+```bash
+python -m pip install .[dev]
+````
+
+This command installs both the core dependencies and the dev dependencies (e.g., mypy) specified in your ```pyproject.toml``` file.
+
+### 2. Run the application (Development)
+
+You can run the application directly from the source code while the virtual environment is active:
+
+```bash
+python main.py
+````
+
+---
+
+## Command List
+
+### Interactive prompts and cancellation
 
 - Some commands are interactive (for example `create-contact-wizard` or when multiple
   contacts match a name and the program asks you to pick a Contact ID).
 - Pressing `Ctrl+C` during an interactive prompt will cancel the current operation
   gracefully and return you to the main prompt (no traceback).
 
-## Notes
+### Notes
 
 - The CLI stores data in `addressbook.pkl` and `notebook.pkl` in the project folder.
 - Command names and behaviors may be updated; use `help` for the latest command list.
-
-
-### 2. Create a virtual environment
-
-Create a virtual environment to manage dependencies:
-
-```bash
-python -m venv .venv
-```
-
-### 3. Activate the virtual environment
-
-- On Windows:
-  ```bash
-  .venv\Scripts\activate
-  ```
-- On macOS/Linux:
-  ```bash
-  source .venv/bin/activate
-  ```
-
-### 4. Command List
 
 | Command            | Arguments / Format                       | Description                                                                 | Example                                            |
 | ------------------ | ---------------------------------------- | --------------------------------------------------------------------------- | -------------------------------------------------- |
@@ -102,32 +160,4 @@ python -m venv .venv
 | **find-notes**     | `<filters>`                              | Search notes by keywords and tags (see `help find-notes`).                   | `find-notes report +financial -draft #urgent`    |
 | **show-note**      | `<title>`                                | Show a note's content.                                                        | `show-note Shopping`                              |
 | **help**           | —                                        | Show detailed help for commands.                                              | `help`                                             |
-
-
-
-Build and Install Instructions
-## macOS / Linux
-# Step 1: Install build tools
-python3 -m pip install build
-
-# Step 2: Build the package
-python3 -m build
-
-# Step 3: Install the package
-python3 -m pip install dist/personal_assistant-1.0.0-py3-none-any.whl
-
-# Run the assistant
-assistant
-
-## Windows
-# Step 1: Install build tools
-py -m pip install build
-
-# Step 2: Build the package
-py -m build
-
-# Step 3: Install the package
-py -m pip install dist\personal_assistant-1.0.0-py3-none-any.whl
-
-# Run the assistant
-assistant
+| **exit / close**    | —                                        | Exit the assistant.                                                           | `exit`                                             |

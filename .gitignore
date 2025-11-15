@@ -1,4 +1,10 @@
 .idea
 .venv
+dist
+build
+assistant_bot.egg-info
+personal_assistant.egg-info
+addressbook.pkl
+notebook.pkl
 __pycache__/
 

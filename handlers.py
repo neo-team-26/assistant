@@ -381,12 +381,17 @@ def delete_contact(args: List[str], book: AddressBook) -> str:
     if not matches:
         raise KeyError(f"Contact name '{name}' not found.")
 
+    record: Optional[Record] = None
+
     if len(matches) == 1:
         record = matches[0]
     else:
         record = resolve_contact_by_name(name, book)
         if record is None:
             raise KeyError(f"Contact name '{name}' not found.")
+
+    # At this point `record` is guaranteed to be not None
+    assert record is not None
 
     book.delete(record.contact_id)
     return colored_message(f"Contact {record.name.value} (ID: {record.contact_id}) deleted.", Color.GREEN)
@@ -674,6 +679,9 @@ def update_phone(args: List[str], book: AddressBook) -> str:
         raise ValueError(f"Phone number '{new_phone}' is already registered to contact '{owner_record.name.value}'.")
 
     record = book.find_record_by_phone(old_phone)
+    if record is None:
+        raise KeyError(f"Contact with phonenumber '{old_phone}' not found.")
+
     record.edit_phone(old_phone, new_phone)
     return colored_message(f"Phone changed for contact {name} (ID: {record.contact_id}).", Color.GREEN)
 
