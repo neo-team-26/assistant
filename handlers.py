@@ -1,6 +1,6 @@
 from address_book import AddressBook, Record
 from notebook import Notebook
-from utils import colored_message, Color, command_desc, input_error, print_help, Handler
+from utils import colored_message, Color, command_desc, input_error, print_help, Handler, tab_output
 from typing import List, Optional
 
 
@@ -211,12 +211,27 @@ def show_all(args: List[str], book: AddressBook) -> str:
     if not book:
         return "No contacts saved."
 
-    all_contacts: List[str] = []
+    # Prepare rows for tabular output. Fields that may have multiple values
+    # are provided as lists so `tab_output` can split them into sublines.
+    headers = ["ID", "Name", "Phones", "Emails", "Addresses", "Birthday"]
+    rows = []
+
     for record in book.data.values():
-        all_contacts.append(str(record))
+        phones = [p.value for p in record.phones]
+        emails = [e.value for e in record.emails]
+        addresses = [a.value for a in record.addresses]
+        birthday = str(record.birthday) if record.birthday else ""
 
-    return "\n".join(all_contacts)
+        rows.append([
+            record.contact_id,
+            record.name.value,
+            phones,
+            emails,
+            addresses,
+            birthday
+        ])
 
+    return tab_output(rows, headers)
 
 @command_desc(
     command="add-email",
