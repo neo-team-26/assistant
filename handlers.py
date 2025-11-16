@@ -1,45 +1,43 @@
 from address_book import AddressBook, Record
 from notebook import Notebook
-from utils import colored_message, Color, command_desc, input_error, print_help, Handler, tab_output
+from utils import (colored_message, Color,
+                   command_desc, input_error,
+                   print_help, Handler, tab_output)
 from typing import List, Optional
 
 
 def resolve_contact_by_name(name: str, book: AddressBook) -> Optional[Record]:
     matches = book.find_all_records_by_name(name)
-    
     if not matches:
         return None
-    
     if len(matches) == 1:
         return matches[0]
-    
     print(f"\n{len(matches)} contact(s) found with name '{name}':")
     for record in matches:
         parts: List[str] = [f"ID: {record.contact_id}"]
 
         if record.phones:
-            parts.append(f"Phones: {', '.join(p.value for p in record.phones)}")
+            phone_str = ', '.join(p.value for p in record.phones)
+            parts.append(f"Phones: {phone_str}")
 
         if record.emails:
-            parts.append(f"Emails: {', '.join(e.value for e in record.emails)}")
+            email_str = ', '.join(e.value for e in record.emails)
+            parts.append(f"Emails: {email_str}")
 
         if record.addresses:
-            parts.append(f"Addresses: {', '.join(a.value for a in record.addresses)}")
+            addr_str = ', '.join(a.value for a in record.addresses)
+            parts.append(f"Addresses: {addr_str}")
 
         if record.birthday:
             parts.append(f"Birthday: {record.birthday}")
-
         print(f"  {record.name.value} | " + " | ".join(parts))
-    
     try:
         contact_id = input("\nEnter the Contact ID to select: ").strip()
     except KeyboardInterrupt:
         raise KeyboardInterrupt("\nOperation cancelled by user.")
     selected = book.find_record_by_contact_id(contact_id)
-    
     if selected is None:
         raise ValueError(f"Contact ID '{contact_id}' not found.")
-    
     return selected
 
 
@@ -58,24 +56,33 @@ def create_contact(args: List[str], book: AddressBook) -> str:
 
     owner_record = book.find_record_by_phone(phone)
     if owner_record is not None:
-        raise ValueError(f"Phone number '{phone}' is already registered to contact '{owner_record.name.value}'.")
+        raise ValueError(
+            f"Phone number '{phone}' is already registered to "
+            f"contact '{owner_record.name.value}'."
+        )
 
     record = Record(name)
     record.add_phone(phone)
     book.add_record(record)
 
-    return colored_message(f"Contact '{name}' created (ID: {record.contact_id}) with phone {phone}.", Color.GREEN)
+    return colored_message(
+        f"Contact '{name}' created (ID: {record.contact_id}) "
+        f"with phone {phone}.", Color.GREEN
+    )
 
 
 @command_desc(
     command="create-contact-wizard",
     usage="create-contact-wizard",
-    desc="Interactive command to create a new contact with multiple fields (name, phone, birthday, email, address).",
+    desc=("Interactive command to create a new contact with multiple "
+          "fields (name, phone, birthday, email, address)."),
     example="create-contact-wizard"
 )
 def create_contact_wizard(args: List[str], book: AddressBook) -> str:
     if args:
-        raise ValueError("The 'create-contact-wizard' command does not require arguments.")
+        raise ValueError(
+            "The 'create-contact-wizard' command does not require arguments."
+        )
 
     print("Enter contact details. Required fields are marked with *")
     name = input("* Contact name: ").strip()
@@ -85,11 +92,13 @@ def create_contact_wizard(args: List[str], book: AddressBook) -> str:
     phone_input = input("* Phone number (10 digits): ").strip()
     if not phone_input:
         raise ValueError("Phone number is required.")
-    
     try:
         owner_record = book.find_record_by_phone(phone_input)
         if owner_record is not None:
-            raise ValueError(f"Phone number '{phone_input}' is already registered to contact '{owner_record.name.value}'.")
+            raise ValueError(
+                f"Phone number '{phone_input}' is already registered to "
+                f"contact '{owner_record.name.value}'."
+            )
     except ValueError as e:
         raise ValueError(f"Invalid phone: {e}")
 
@@ -123,7 +132,10 @@ def create_contact_wizard(args: List[str], book: AddressBook) -> str:
 
     book.add_record(record)
 
-    return colored_message(f"Contact '{name}' (ID: {record.contact_id}) added successfully with all details.", Color.GREEN)
+    return colored_message(
+        f"Contact '{name}' (ID: {record.contact_id}) added successfully "
+        f"with all details.", Color.GREEN
+    )
 
 
 @command_desc(
@@ -148,7 +160,10 @@ def show_phone(args: List[str], book: AddressBook) -> str:
         single = matches[0]
         if single.phones:
             return '; '.join(p.value for p in single.phones)
-        return f"Contact {single.name.value} (ID: {single.contact_id}) has no phones saved."
+        return (
+            f"Contact {single.name.value} (ID: {single.contact_id}) "
+            f"has no phones saved."
+        )
 
     # Multiple matches: collect detailed info
     lines: List[str] = []
@@ -157,13 +172,16 @@ def show_phone(args: List[str], book: AddressBook) -> str:
         parts.append(f"{record.name.value} (ID: {record.contact_id})")
 
         if record.phones:
-            parts.append(f"phones: {'; '.join(p.value for p in record.phones)}")
+            phone_str = '; '.join(p.value for p in record.phones)
+            parts.append(f"phones: {phone_str}")
 
         if record.emails:
-            parts.append(f"emails: {'; '.join(e.value for e in record.emails)}")
+            email_str = '; '.join(e.value for e in record.emails)
+            parts.append(f"emails: {email_str}")
 
         if record.addresses:
-            parts.append(f"addresses: {'; '.join(a.value for a in record.addresses)}")
+            addr_str = '; '.join(a.value for a in record.addresses)
+            parts.append(f"addresses: {addr_str}")
 
         if record.birthday:
             parts.append(f"birthday: {record.birthday}")
@@ -183,19 +201,22 @@ def show_phone(args: List[str], book: AddressBook) -> str:
 def add_phone(args: List[str], book: AddressBook) -> str:
     if len(args) != 2:
         raise ValueError("Must provide contact name and phone number.")
-    
     name, phone = args
-    
     owner_record = book.find_record_by_phone(phone)
     if owner_record is not None:
-        raise ValueError(f"Phone number '{phone}' is already registered to contact '{owner_record.name.value}'.")
-    
+        raise ValueError(
+            f"Phone number '{phone}' is already registered to "
+            f"contact '{owner_record.name.value}'."
+        )
     record = resolve_contact_by_name(name, book)
     if record is None:
         raise KeyError(f"Contact name '{name}' not found.")
-    
     record.add_phone(phone)
-    return colored_message(f"Phone {phone} added to contact {name} (ID: {record.contact_id}).", Color.GREEN)
+    return colored_message(
+        f"Phone {phone} added to contact {name} "
+        f"(ID: {record.contact_id}).", Color.GREEN
+    )
+
 
 @command_desc(
     command="all",
@@ -233,6 +254,7 @@ def show_all(args: List[str], book: AddressBook) -> str:
 
     return tab_output(rows, headers)
 
+
 @command_desc(
     command="add-email",
     usage="add-email [name] [email]",
@@ -252,7 +274,10 @@ def add_email(args: List[str], book: AddressBook) -> str:
 
     if owner_record is not None:
         if owner_record.name.value.lower() != name.lower():
-            raise ValueError(f"Email '{email}' is already registered to contact '{owner_record.name.value}'.")
+            raise ValueError(
+                f"Email '{email}' is already registered to "
+                f"contact '{owner_record.name.value}'."
+            )
         else:
             pass
 
@@ -288,7 +313,10 @@ def remove_email(args: List[str], book: AddressBook) -> str:
         raise KeyError(f"Contact name '{name}' not found.")
 
     record.remove_email(email)
-    return colored_message(f"Email removed from contact {name} (ID: {record.contact_id}).", Color.GREEN)
+    return colored_message(
+        f"Email removed from contact {name} "
+        f"(ID: {record.contact_id}).", Color.GREEN
+    )
 
 
 @command_desc(
@@ -302,7 +330,9 @@ def change_email(args: List[str], book: AddressBook) -> str:
     if len(args) < 3:
         raise ValueError("Must provide name, old_email and new_email.")
     if len(args) > 3:
-        raise ValueError("Too many arguments. Expected: [name] [old_email] [new_email]")
+        raise ValueError(
+            "Too many arguments. Expected: [name] [old_email] [new_email]"
+        )
 
     name, old_email, new_email = args
     record = resolve_contact_by_name(name, book)
@@ -310,7 +340,10 @@ def change_email(args: List[str], book: AddressBook) -> str:
         raise KeyError(f"Contact name '{name}' not found.")
 
     record.edit_email(old_email, new_email)
-    return colored_message(f"Email changed for contact {name} (ID: {record.contact_id}).", Color.GREEN)
+    return colored_message(
+        f"Email changed for contact {name} "
+        f"(ID: {record.contact_id}).", Color.GREEN
+    )
 
 
 @command_desc(
@@ -333,7 +366,10 @@ def add_address(args: List[str], book: AddressBook) -> str:
 
     record.add_address(address)
 
-    return colored_message(f"Address added to contact {name} (ID: {record.contact_id}).", Color.GREEN)
+    return colored_message(
+        f"Address added to contact {name} "
+        f"(ID: {record.contact_id}).", Color.GREEN
+    )
 
 
 @command_desc(
@@ -355,7 +391,10 @@ def remove_address(args: List[str], book: AddressBook) -> str:
         raise KeyError(f"Contact name '{name}' not found.")
 
     record.remove_address(address)
-    return colored_message(f"Address removed from contact {name} (ID: {record.contact_id}).", Color.GREEN)
+    return colored_message(
+        f"Address removed from contact {name} "
+        f"(ID: {record.contact_id}).", Color.GREEN
+    )
 
 
 @command_desc(
@@ -369,7 +408,9 @@ def change_address(args: List[str], book: AddressBook) -> str:
     if len(args) < 3:
         raise ValueError("Must provide name, old_address and new_address.")
     if len(args) > 3:
-        raise ValueError("Too many arguments. Expected: [name] [old_address] [new_address]")
+        raise ValueError(
+            "Too many arguments. Expected: [name] [old_address] [new_address]"
+        )
 
     name, old_address, new_address = args
     record = resolve_contact_by_name(name, book)
@@ -377,7 +418,10 @@ def change_address(args: List[str], book: AddressBook) -> str:
         raise KeyError(f"Contact name '{name}' not found.")
 
     record.edit_address(old_address, new_address)
-    return colored_message(f"Address changed for contact {name} (ID: {record.contact_id}).", Color.GREEN)
+    return colored_message(
+        f"Address changed for contact {name} "
+        f"(ID: {record.contact_id}).", Color.GREEN
+    )
 
 
 @command_desc(
@@ -409,7 +453,10 @@ def delete_contact(args: List[str], book: AddressBook) -> str:
     assert record is not None
 
     book.delete(record.contact_id)
-    return colored_message(f"Contact {record.name.value} (ID: {record.contact_id}) deleted.", Color.GREEN)
+    return colored_message(
+        f"Contact {record.name.value} (ID: {record.contact_id}) deleted.",
+        Color.GREEN
+    )
 
 
 @command_desc(
@@ -426,24 +473,32 @@ def delete_phone(args: List[str], book: AddressBook) -> str:
     record = book.find_record_by_phone(phone)
     if record is None:
         raise KeyError(f"Contact with phonenumber '{phone}' not found.")
-    
     if len(record.phones) == 1:
-        raise ValueError(f"Cannot delete the last phone number for '{name}'. To remove this contact entirely, use 'delete-contact {name}'.")
-    
+        raise ValueError(
+            f"Cannot delete the last phone number for '{name}'. "
+            f"To remove this contact entirely, use 'delete-contact {name}'."
+        )
     record.remove_phone(phone)
-    return colored_message(f"Phone {phone} deleted for record {name} (ID: {record.contact_id}).", Color.GREEN)
+    return colored_message(
+        f"Phone {phone} deleted for record {name} "
+        f"(ID: {record.contact_id}).", Color.GREEN
+    )
 
 
 @command_desc(
     command="add-note",
     usage="add-note [name] [text] [optional #tag1 #tag2 ...]",
-    desc="Adds note to notebook with specified name and optional tags (starting with #).",
+    desc=("Adds note to notebook with specified name and optional tags "
+          "(starting with #)."),
     example="add-note homework 'Do it today!!!' #todo #urgent"
 )
 @input_error
 def add_note(args: List[str], notebook: Notebook) -> str:
     if len(args) < 2:
-        raise ValueError("Please provide Note name and text (in quotation marks). Optional: add tags starting with #.")
+        raise ValueError(
+            "Please provide Note name and text (in quotation marks). "
+            "Optional: add tags starting with #."
+        )
 
     name = args[0]
     text_parts: List[str] = []
@@ -451,11 +506,14 @@ def add_note(args: List[str], notebook: Notebook) -> str:
 
     for arg in args[1:]:
         if arg.startswith('#'):
-            tags.append(arg[1:]) # Видаляємо #
-        elif not tags: # All text parts before tags
+            tags.append(arg[1:])  # Видаляємо #
+        elif not tags:  # All text parts before tags
             text_parts.append(arg)
-        else: # If tags have started, no more text allowed
-            raise ValueError("Text must be provided before tags. Tags must start with '#'.")
+        else:  # If tags have started, no more text allowed
+            raise ValueError(
+                "Text must be provided before tags. "
+                "Tags must start with '#'."
+            )
 
     if not text_parts:
         raise ValueError("Please provide Note text (in quotation marks).")
@@ -465,7 +523,9 @@ def add_note(args: List[str], notebook: Notebook) -> str:
     notebook.add_note(name, text, tags)
 
     tag_info = f" with tags: {', '.join(tags)}" if tags else ""
-    return colored_message(f"Added note \"{name}\" with text: \"{text}\"{tag_info}", Color.GREEN)
+    return colored_message(
+        f"Added note \"{name}\" with text: \"{text}\"{tag_info}", Color.GREEN
+    )
 
 
 @command_desc(
@@ -477,7 +537,9 @@ def add_note(args: List[str], notebook: Notebook) -> str:
 @input_error
 def edit_note(args: List[str], notebook: Notebook) -> str:
     if len(args) != 2:
-        raise ValueError("Please provide note name and text(in quotation marks)")
+        raise ValueError(
+            "Please provide note name and text(in quotation marks)"
+        )
     name, text = args
     notebook.edit_note(name, text)
     return colored_message(f"Changed note {name} to:{text}", Color.GREEN)
@@ -516,7 +578,8 @@ def all_notes(args: List[str], notebook: Notebook) -> str:
 @command_desc(
     command="find-notes",
     usage="find-notes [word | +word | -word] [optional #tag1 #tag2 ...]",
-    desc="Lists notes that match keywords (+ for AND, - for NOT, no prefix for OR) AND AT LEAST ONE specified tag.",
+    desc=("Lists notes that match keywords (+ for AND, - for NOT, no prefix "
+          "for OR) AND AT LEAST ONE specified tag."),
     example="find-notes report +financial -draft #urgent #month_end"
 )
 @input_error
@@ -541,10 +604,13 @@ def find_notes(args: List[str], notebook: Notebook) -> str:
         else:
             or_words.append(arg)
 
-    if not (and_words or or_words or not_words or required_tags):
+    if not any((and_words, or_words, not_words, required_tags)):
         raise ValueError("Please provide one or more search words or tags.")
 
-    results = notebook.find_notes(and_words, or_words, not_words, required_tags)
+    results = notebook.find_notes(and_words,
+                                  or_words,
+                                  not_words,
+                                  required_tags)
 
     if not results:
         text_terms = ", ".join(and_words + or_words + not_words)
@@ -588,7 +654,9 @@ def show_note(args: List[str], notebook: Notebook) -> str:
 @input_error
 def add_tags(args: List[str], notebook: Notebook) -> str:
     if len(args) < 2:
-        raise ValueError("Please provide note name and at least one tag (starting with #).")
+        raise ValueError(
+            "Please provide note name and at least one tag (starting with #)."
+        )
 
     name = args[0]
     tags: List[str] = []
@@ -604,7 +672,9 @@ def add_tags(args: List[str], notebook: Notebook) -> str:
 
     try:
         notebook.add_tags_to_note(name, tags)
-        return colored_message(f"Tags added to note '{name}': {', '.join(tags)}", Color.GREEN)
+        return colored_message(
+            f"Tags added to note '{name}': {', '.join(tags)}", Color.GREEN
+        )
     except KeyError as e:
         raise KeyError(str(e))
 
@@ -618,7 +688,9 @@ def add_tags(args: List[str], notebook: Notebook) -> str:
 @input_error
 def remove_tag(args: List[str], notebook: Notebook) -> str:
     if len(args) != 2:
-        raise ValueError("Please provide note name and one tag (starting with #).")
+        raise ValueError(
+            "Please provide note name and one tag (starting with #)."
+        )
 
     name = args[0]
     tag_arg = args[1]
@@ -630,7 +702,9 @@ def remove_tag(args: List[str], notebook: Notebook) -> str:
 
     try:
         notebook.remove_tag_from_note(name, tag)
-        return colored_message(f"Tag '{tag}' removed from note '{name}'.", Color.GREEN)
+        return colored_message(
+            f"Tag '{tag}' removed from note '{name}'.", Color.GREEN
+        )
     except KeyError as e:
         raise KeyError(str(e))
     except ValueError as e:
@@ -644,9 +718,9 @@ def remove_tag(args: List[str], notebook: Notebook) -> str:
     example="help add"
 )
 @input_error
-def show_help(args: List[str], _: None) -> str: # Second argument is needed for uniformity
+# Second argument is needed for uniformity
+def show_help(args: List[str], _: None) -> str:
     """Show help information for commands.
-
     If args provided, show detailed help for that command.
     Else, show a summary of all commands.
     """
@@ -657,7 +731,8 @@ def show_help(args: List[str], _: None) -> str: # Second argument is needed for 
         handler = COMMANDS.get(command_name)
         if handler is None:
             raise KeyError(f"Command '{command_name}' not found.")
-        # Use getattr to access metadata attached by decorator to avoid mypy attribute errors
+        # Use getattr to access metadata
+        # attached by decorator to avoid mypy attribute errors
         return print_help(
             command=getattr(handler, 'command', command_name),
             usage=getattr(handler, 'usage', ''),
@@ -685,20 +760,29 @@ def update_phone(args: List[str], book: AddressBook) -> str:
     if len(args) < 3:
         raise ValueError("Must provide name, old phone and new phone.")
     if len(args) > 3:
-        raise ValueError("Too many arguments. Expected: [name] [old_phone] [new_phone]")
+        raise ValueError(
+            "Too many arguments. Expected: [name] [old_phone] [new_phone]"
+        )
 
     name, old_phone, new_phone = args
 
     owner_record = book.find_record_by_phone(new_phone)
-    if owner_record is not None and owner_record.name.value.lower() != name.lower():
-        raise ValueError(f"Phone number '{new_phone}' is already registered to contact '{owner_record.name.value}'.")
+    if (owner_record is not None and
+            owner_record.name.value.lower() != name.lower()):
+        raise ValueError(
+            f"Phone number '{new_phone}' is already registered to "
+            f"contact '{owner_record.name.value}'."
+        )
 
     record = book.find_record_by_phone(old_phone)
     if record is None:
         raise KeyError(f"Contact with phonenumber '{old_phone}' not found.")
 
     record.edit_phone(old_phone, new_phone)
-    return colored_message(f"Phone changed for contact {name} (ID: {record.contact_id}).", Color.GREEN)
+    return colored_message(
+        f"Phone changed for contact {name} "
+        f"(ID: {record.contact_id}).", Color.GREEN
+    )
 
 
 @command_desc(
@@ -723,7 +807,10 @@ def update_name(args: List[str], book: AddressBook) -> str:
     old_id = record.contact_id
     record.name.value = new_name
 
-    return colored_message(f"Contact name changed from '{old_name}' to '{new_name}' (ID: {old_id}).", Color.GREEN)
+    return colored_message(
+        f"Contact name changed from '{old_name}' to '{new_name}' "
+        f"(ID: {old_id}).", Color.GREEN
+    )
 
 
 @command_desc(
@@ -777,7 +864,10 @@ def show_birthday(args: List[str], book: AddressBook) -> str:
         single = matches[0]
         if single.birthday:
             return f"Birthday: {single.birthday}."
-        return f"Contact {single.name.value} (ID: {single.contact_id}) has no birthday saved."
+        return (
+            f"Contact {single.name.value} (ID: {single.contact_id}) "
+            f"has no birthday saved."
+        )
 
     # Multiple matches: collect detailed info
     lines: List[str] = []
@@ -791,13 +881,16 @@ def show_birthday(args: List[str], book: AddressBook) -> str:
             parts.append("birthday: N/A")
 
         if record.phones:
-            parts.append(f"phones: {'; '.join(p.value for p in record.phones)}")
+            phone_str = '; '.join(p.value for p in record.phones)
+            parts.append(f"phones: {phone_str}")
 
         if record.emails:
-            parts.append(f"emails: {'; '.join(e.value for e in record.emails)}")
+            email_str = '; '.join(e.value for e in record.emails)
+            parts.append(f"emails: {email_str}")
 
         if record.addresses:
-            parts.append(f"addresses: {'; '.join(a.value for a in record.addresses)}")
+            addr_str = '; '.join(a.value for a in record.addresses)
+            parts.append(f"addresses: {addr_str}")
 
         lines.append(', '.join(parts))
 
@@ -812,7 +905,8 @@ def show_birthday(args: List[str], book: AddressBook) -> str:
 )
 @input_error
 def birthdays(args: List[str], book: AddressBook) -> str:
-    """List upcoming birthdays grouped by weekday. Optional single arg: days (int)."""
+    """List upcoming birthdays grouped by weekday.
+    Optional single arg: days (int)."""
     if len(args) > 1:
         raise ValueError("Too many arguments. Expected: [days]")
 
@@ -858,7 +952,9 @@ def update_birthday(args: List[str], book: AddressBook) -> str:
         raise ValueError(f"Contact '{name}' does not have a birthday set.")
 
     record.birthday.value = birthday_date
-    return colored_message(f"Birthday updated for {name} (ID: {record.contact_id}).", Color.GREEN)
+    return colored_message(
+        f"Birthday updated for {name} (ID: {record.contact_id}).", Color.GREEN
+    )
 
 
 @command_desc(
@@ -883,7 +979,9 @@ def delete_birthday(args: List[str], book: AddressBook) -> str:
         raise ValueError(f"Contact '{name}' does not have a birthday set.")
 
     record.birthday = None
-    return colored_message(f"Birthday removed for {name} (ID: {record.contact_id}).", Color.GREEN)
+    return colored_message(
+        f"Birthday removed for {name} (ID: {record.contact_id}).", Color.GREEN
+    )
 
 
 @command_desc(
@@ -895,9 +993,13 @@ def delete_birthday(args: List[str], book: AddressBook) -> str:
 @input_error
 def find_contact(args: List[str], book: AddressBook) -> str:
     if len(args) < 2:
-        raise ValueError("Must provide field and value. Usage: find-contact [field] [value]")
+        raise ValueError(
+            "Must provide field and value. Usage: find-contact [field] [value]"
+        )
     if len(args) > 2:
-        raise ValueError("Too many arguments. Usage: find-contact [field] [value]")
+        raise ValueError(
+            "Too many arguments. Usage: find-contact [field] [value]"
+        )
 
     field, value = args
     field = field.lower()
@@ -918,11 +1020,13 @@ def find_contact(args: List[str], book: AddressBook) -> str:
             if rec.birthday and str(rec.birthday) == value:
                 found.append(rec)
     else:
-        raise ValueError("Field must be one of: name, phone, address, birthday.")
+        msg = "Field must be one of: name, phone, address, birthday."
+        raise ValueError(msg)
 
     if not found:
         return f"No contact found for {field}: {value}"
     return "\n".join(str(r) for r in found)
+
 
 COMMANDS: dict[str, Handler] = {
     # TODO: uncomment it after implementing the functions
