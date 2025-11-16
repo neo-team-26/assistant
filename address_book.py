@@ -29,7 +29,8 @@ class Name(Field):
 
 
 class Phone(Field):
-    """Class for storing the phone number. Includes 10-digit format validation."""
+    """Class for storing the phone number.
+    Includes 10-digit format validation."""
 
     def __init__(self, value: str):
         self._validate_phone(value)
@@ -52,10 +53,13 @@ class Phone(Field):
 
 
 class Email(Field):
-    """Class for storing the contact's email. Includes simple email format validation."""
+    """Class for storing the contact's email.
+    Includes simple email format validation."""
 
-    # Simple, commonly used email regex. Not exhaustive but sufficient for basic validation.
-    EMAIL_REGEX = re.compile(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$")
+    # Simple, commonly used email regex.
+    # Not exhaustive but sufficient for basic validation.
+    ptrn = r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"
+    EMAIL_REGEX = re.compile(ptrn)
 
     def __init__(self, value: str):
         self._validate_email(value)
@@ -63,7 +67,8 @@ class Email(Field):
 
     @staticmethod
     def _validate_email(email: str) -> None:
-        """Validate email using a regular expression. Raise ValueError on invalid format."""
+        """Validate email using a regular expression.
+        Raise ValueError on invalid format."""
         if not Email.EMAIL_REGEX.fullmatch(email):
             raise ValueError("Invalid email address format.")
 
@@ -78,7 +83,8 @@ class Email(Field):
 
 
 class Address(Field):
-    """Class for storing the contact's postal/address string. No validation required."""
+    """Class for storing the contact's postal/address string.
+    No validation required."""
 
     def __init__(self, value: str):
         # No validation required; store as-is
@@ -95,12 +101,14 @@ class Address(Field):
 
 
 class Birthday(Field):
-    """Class for storing the contact's birthday. Includes DD.MM.YYYY format validation."""
+    """Class for storing the contact's birthday.
+    Includes DD.MM.YYYY format validation."""
 
     def __init__(self, value: str):
         self._validate_birthday(value)
         # Store as datetime.date object
-        super().__init__(datetime.strptime(value, "%d.%m.%Y").date())
+        parsed_date = datetime.strptime(value, "%d.%m.%Y").date()
+        super().__init__(parsed_date)
 
     @staticmethod
     def _validate_birthday(date_str: str) -> None:
@@ -117,7 +125,8 @@ class Birthday(Field):
     @value.setter
     def value(self, new_value: str) -> None:
         self._validate_birthday(new_value)
-        self._value = datetime.strptime(new_value, "%d.%m.%Y").date()
+        parsed_date = datetime.strptime(new_value, "%d.%m.%Y").date()
+        self._value = parsed_date
 
     def __str__(self) -> str:
         if self._value is None:
@@ -127,10 +136,12 @@ class Birthday(Field):
 
 
 class Record:
-    """Class for storing contact information (name, list of phones, and birthday)."""
+    """Class for storing contact information
+    (name, list of phones, and birthday)."""
 
     def __init__(self, name: str):
-        self.contact_id: str = str(uuid.uuid4())[:8]  # Short 8-char UUID for display
+        # Short 8-char UUID for display
+        self.contact_id: str = str(uuid.uuid4())[:8]
         self.name: Name = Name(name)
         self.phones: List[Phone] = []
         self.emails: List[Email] = []
@@ -138,9 +149,11 @@ class Record:
         self.birthday: Optional[Birthday] = None
 
     def add_phone(self, phone_number: str) -> None:
-        phone = Phone(phone_number) # Validation is inside Phone.__init__
+        phone = Phone(phone_number)  # Validation is inside Phone.__init__
         if self.find_phone(phone_number):
-            raise ValueError(f"Phone number '{phone_number}' already exists for this contact.")
+            err_msg = f"Phone number '{phone_number}' " \
+                      f"already exists for this contact."
+            raise ValueError(err_msg)
         self.phones.append(phone)
 
     def remove_phone(self, phone_number: str) -> None:
@@ -153,7 +166,9 @@ class Record:
     def edit_phone(self, old_phone: str, new_phone: str) -> None:
         # Check if the new phone is already used by this record
         if self.find_phone(new_phone):
-            raise ValueError(f"New phone number '{new_phone}' is already registered to this contact.")
+            err_msg = f"New phone number '{new_phone}' " \
+                      f"is already registered to this contact."
+            raise ValueError(err_msg)
 
         phone_object = self.find_phone(old_phone)
         if phone_object:
@@ -165,7 +180,9 @@ class Record:
     def add_email(self, email_str: str) -> None:
         email = Email(email_str)  # validation inside Email
         if self.find_email(email_str):
-            raise ValueError(f"Email '{email_str}' already exists for this contact.")
+            raise ValueError(
+                f"Email '{email_str}' already exists for this contact."
+            )
         self.emails.append(email)
 
     def remove_email(self, email_str: str) -> None:
@@ -177,7 +194,10 @@ class Record:
 
     def edit_email(self, old_email: str, new_email: str) -> None:
         if self.find_email(new_email):
-            raise ValueError(f"New email '{new_email}' is already registered to this contact.")
+            raise ValueError(
+                f"New email '{new_email}' is already registered "
+                f"to this contact."
+            )
 
         email_object = self.find_email(old_email)
         if email_object:
@@ -194,10 +214,13 @@ class Record:
     # --- Address management ---
     def add_address(self, address_str: str) -> None:
         addr = Address(address_str)
-        # Inline check for existing address (removed separate find_address helper)
+        # Inline check for existing address
+        # (removed separate find_address helper)
         for a in self.addresses:
             if a.value == address_str:
-                raise ValueError(f"Address '{address_str}' already exists for this contact.")
+                err_msg = f"Address '{address_str}' " \
+                          f"already exists for this contact."
+                raise ValueError(err_msg)
         self.addresses.append(addr)
 
     def remove_address(self, address_str: str) -> None:
@@ -212,7 +235,10 @@ class Record:
         # Prevent duplicate
         for a in self.addresses:
             if a.value == new_address:
-                raise ValueError(f"New address '{new_address}' is already registered to this contact.")
+                raise ValueError(
+                    f"New address '{new_address}' is already registered "
+                    f"to this contact."
+                )
 
         # Find existing and edit
         for a in self.addresses:
@@ -232,7 +258,8 @@ class Record:
 
     def add_birthday(self, birthday_date: str) -> None:
         if self.birthday is not None:
-            raise ValueError("Birthday already set. Use a separate command to edit.")
+            err_msg = "Birthday already set. Use a separate command to edit."
+            raise ValueError(err_msg)
         self.birthday = Birthday(birthday_date)
 
     def __str__(self) -> str:
@@ -240,19 +267,24 @@ class Record:
         email_str = '; '.join(e.value for e in self.emails)
         addr_str = '; '.join(a.value for a in self.addresses)
         birthday_str = f", birthday: {self.birthday}" if self.birthday else ""
-        parts = [f"Contact ID: {self.contact_id}, name: {self.name.value}"]
-        parts.append(f"phones: {phone_str}")
+        parts = [
+            f"Contact ID: {self.contact_id}, name: {self.name.value}"
+        ]
+        if phone_str:
+            parts.append(f"phones: {phone_str}")
         if email_str:
             parts.append(f"emails: {email_str}")
         if addr_str:
             parts.append(f"addresses: {addr_str}")
-        parts.append(birthday_str.lstrip(', '))
+        if birthday_str:
+            parts.append(birthday_str.lstrip(', '))
         # Filter out empty parts and join with ', '
-        return ', '.join([p for p in parts if p])
+        return ', '.join(parts)
 
 
 class AddressBook(UserDict[str, Record]):
-    """Class for storing and managing records (Record). Inherits from UserDict."""
+    """Class for storing and managing records (Record).
+    Inherits from UserDict."""
 
     def add_record(self, record: Record) -> None:
         contact_id = record.contact_id
@@ -295,14 +327,19 @@ class AddressBook(UserDict[str, Record]):
         if contact_id in self.data:
             del self.data[contact_id]
         else:
-            raise KeyError(f"Contact ID '{contact_id}' not found for deletion.")
+            raise KeyError(
+                f"Contact ID '{contact_id}' not found for deletion."
+            )
 
     def get_upcoming_birthdays(self, days: int = 7) -> Dict[str, List[str]]:
         upcoming_birthdays: Dict[str, List[str]] = {}
         today = datetime.now().date()
 
         # Day names for sorting the final output
-        day_order = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+        day_order = [
+            "Monday", "Tuesday", "Wednesday", "Thursday", "Friday",
+            "Saturday", "Sunday"
+        ]
 
         for record in self.data.values():
             if record.birthday is not None:
@@ -313,20 +350,27 @@ class AddressBook(UserDict[str, Record]):
 
                 if birthday_this_year < today:
                     # Check for birthday next year if this year's has passed
-                    birthday_this_year = birthday_this_year.replace(year=today.year + 1)
+                    birthday_this_year = birthday_this_year.replace(
+                        year=today.year + 1
+                    )
 
                 time_delta = birthday_this_year - today
 
                 if timedelta(0) <= time_delta < timedelta(days=days):
-                    birthday_day_index = birthday_this_year.weekday() # 0=Monday, 6=Sunday
+                    # 0=Monday, 6=Sunday
+                    birthday_day_index = birthday_this_year.weekday()
 
-                    # Rule: If birthday is Saturday (5) or Sunday (6), move congratulations to Monday (0)
+                    # Rule: If b-day is Sat/Sun, move congrats to Mon
                     if birthday_day_index >= 5:
-                        congratulation_date = birthday_this_year + timedelta(days=(7 - birthday_day_index))
+                        days_to_monday = 7 - birthday_day_index
+                        congratulation_date = (
+                            birthday_this_year + timedelta(days=days_to_monday)
+                        )
                     else:
                         congratulation_date = birthday_this_year
 
-                    day_name = congratulation_date.strftime("%A") # e.g., Monday
+                    # e.g., Monday
+                    day_name = congratulation_date.strftime("%A")
                     name = record.name.value
 
                     if day_name not in upcoming_birthdays:
