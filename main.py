@@ -26,7 +26,8 @@ def main() -> None:
     Main command loop: loads data, processes user commands, saves on exit.
     """
     print("Welcome to the assistant bot!")
-    print("Type 'help' to see available commands. Type 'exit' or 'close' to quit.")
+    print("Type 'help' to see available commands. "
+          "Type 'exit' or 'close' to quit.")
 
     try:
         while True:
@@ -55,7 +56,8 @@ def main() -> None:
                         print(f"  {s}")
                     print()
                 else:
-                    print(colored_message("No similar commands found.", Color.YELLOW))
+                    print(colored_message("No similar commands found.",
+                                          Color.YELLOW))
                 continue
 
             sig = inspect.signature(handler)

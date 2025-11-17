@@ -59,17 +59,20 @@ class NoteEntry:
         return f"{self.text} {' '.join(self.tags)}"
 
 
-class Notebook(UserDict[str, NoteEntry]): # Value type changed to NoteEntry
+class Notebook(UserDict[str, NoteEntry]):  # Value type changed to NoteEntry
     """Class for storing and managing Notes. Inherits from UserDict.
 
     Keys are strings (note name), values are NoteEntry objects.
     """
 
-    def add_note(self, name: str, note_text: str, tags: Optional[List[str]] = None) -> None:
+    def add_note(self, name: str, note_text: str,
+                 tags: Optional[List[str]] = None) -> None:
         if name in self.data:
-            raise ValueError(
-                f"Notebook already contains '{name}' note. please use 'edit-note' command or provide a different name"
+            msg = (
+                f"Notebook already contains '{name}' note. please use "
+                f"'edit-note' command or provide a different name"
             )
+            raise ValueError(msg)
 
         self.data[name] = NoteEntry(note_text, tags)
 
@@ -103,7 +106,8 @@ class Notebook(UserDict[str, NoteEntry]): # Value type changed to NoteEntry
 
     def list_notes(self) -> str:
         """
-        Return a newline-separated listing of notes in the form 'name: text #tag1 #tag2'.
+        Return a newline-separated listing
+        of notes in the form 'name: text #tag1 #tag2'.
         Notes are sorted by their first tag.
         """
         items = list(self.data.items())
@@ -112,11 +116,12 @@ class Notebook(UserDict[str, NoteEntry]): # Value type changed to NoteEntry
 
         result: List[str] = []
         for name, note_entry in items:
-            result.append(f"{name}: {note_entry}") # Using NoteEntry's __str__
+            result.append(f"{name}: {note_entry}")  # Using NoteEntry's __str__
         return os.linesep.join(result)
 
     def get_note(self, name: str) -> Optional[str]:
-        """Get the full string representation of a note by its name. Returns None if not found."""
+        """Get the full string representation of a note by its name.
+        Returns None if not found."""
         note_entry = self.data.get(name)
         return str(note_entry) if note_entry else None
 
@@ -151,7 +156,9 @@ class Notebook(UserDict[str, NoteEntry]): # Value type changed to NoteEntry
         # 1. Prepare patterns for text search
         and_patterns: List[Pattern[str]] = []
         if and_words:
-            and_patterns = [re.compile(re.escape(w), re.IGNORECASE) for w in and_words]
+            and_patterns = [
+                re.compile(re.escape(w), re.IGNORECASE) for w in and_words
+            ]
 
         or_pattern: Optional[Pattern[str]] = None
         if or_words:
@@ -166,22 +173,31 @@ class Notebook(UserDict[str, NoteEntry]): # Value type changed to NoteEntry
                 not_pattern = re.compile(pattern_str, re.IGNORECASE)
 
         # 2. Prepare for tag filtering (OR logic)
-        normalized_tags: Set[str] = set([tag.lower() for tag in required_tags])
+        normalized_tags: Set[str] = {tag.lower() for tag in required_tags}
 
         for name, note_entry in self.data.items():
             search_content = note_entry.get_searchable_content()
 
             # Text Filtering (Step 1: NOT)
-            if not_pattern and (not_pattern.search(search_content) or not_pattern.search(name)):
-                continue # Exclude the note
+            if not_pattern and (
+                not_pattern.search(search_content) or
+                not_pattern.search(name)
+            ):
+                continue  # Exclude the note
 
             # Text Filtering (Step 2: AND)
-            and_match = all(p.search(search_content) or p.search(name) for p in and_patterns)
+            and_match = all(
+                p.search(search_content) or p.search(name)
+                for p in and_patterns
+            )
 
             # Text Filtering (Step 3: OR)
             or_match = True
-            if or_words: # Only if OR words were provided
-                or_match = bool(or_pattern and (or_pattern.search(search_content) or or_pattern.search(name)))
+            if or_words:  # Only if OR words were provided
+                or_match = bool(or_pattern and (
+                    or_pattern.search(search_content) or
+                    or_pattern.search(name)
+                ))
 
             # Final text match (AND and OR)
             text_match = and_match and or_match
@@ -190,16 +206,16 @@ class Notebook(UserDict[str, NoteEntry]): # Value type changed to NoteEntry
             if not has_text_search:
                 text_match = True
 
-
             # Tag Filtering (Step 4: OR)
             tag_match = False
             if normalized_tags:
-                tag_match = bool(normalized_tags.intersection(note_entry._tags))
+                tag_match = bool(
+                    normalized_tags.intersection(note_entry._tags)
+                )
 
             # If no tag search criteria were set, assume a match
             if not has_tag_search:
                 tag_match = True
-
 
             # Note inclusion: must match the text part AND the tag part
             if text_match and tag_match:
