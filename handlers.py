@@ -3,7 +3,7 @@ from notebook import Notebook
 from utils import (colored_message, Color,
                    command_desc, input_error,
                    print_help, Handler, tab_output)
-from typing import List, Optional
+from typing import Any, List, Optional, Sequence
 
 
 def resolve_contact_by_name(name: str, book: AddressBook) -> Optional[Record]:
@@ -235,7 +235,7 @@ def show_all(args: List[str], book: AddressBook) -> str:
     # Prepare rows for tabular output. Fields that may have multiple values
     # are provided as lists so `tab_output` can split them into sublines.
     headers = ["ID", "Name", "Phones", "Emails", "Addresses", "Birthday"]
-    rows = []
+    rows: List[Sequence[Any]] = []
 
     for record in book.data.values():
         phones = [p.value for p in record.phones]

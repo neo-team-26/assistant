@@ -3,7 +3,7 @@ import shlex
 from enum import Enum
 from functools import wraps
 from typing import (List, Tuple, Callable, Any, Protocol,
-                    TypeVar, Optional, Union, cast)
+                    TypeVar, Optional, Union, cast, Sequence)
 import difflib
 import textwrap
 
@@ -191,9 +191,9 @@ def print_help(command: str, usage: str,
 
 
 def tab_output(
-    data, headers, max_col_width: int = 30,
+    data: List[Sequence[Any]], headers: List[str], max_col_width: int = 30,
     custom_widths: Optional[List[int]] = None
-):
+) -> str:
     """
     Format a table where cells may contain multiple values.
     Returns a string suitable for console output.
